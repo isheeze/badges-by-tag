@@ -590,116 +590,129 @@ export default function BadgesPage() {
       </s-button>
 
       <s-section>
-        <div style={styles.layout}>
-          <div style={styles.mainColumn}>
-            {justSaved ? <div style={styles.success}>Mappings saved to Shopify.</div> : null}
-            {billing?.error ? (
-              <div style={styles.alert}>
-                <strong>Could not start billing.</strong>
-                <p style={styles.noticeText}>{billing.error}</p>
-              </div>
-            ) : null}
-            {billing?.enabled && !billing.hasPro ? (
-              <div style={overFreeLimit ? styles.warning : styles.info}>
-                <strong>Free plan: {billing.freeLimit} badges included.</strong>
-                <p style={styles.noticeText}>
-                  {overFreeLimit
-                    ? `You have ${mappings.length} badges. Remove badges or upgrade to Pro before saving.`
-                    : `${Math.max(billing.freeLimit - mappings.length, 0)} free badge slots remaining.`}
-                </p>
-                {overFreeLimit ? <s-button href="/app/billing" variant="primary">Upgrade to Pro</s-button> : null}
-              </div>
-            ) : null}
-            {actionData?.error ? (
-              <div style={styles.alert}>
-                <strong>{actionData.error}</strong>
-                {actionData.billingRequired ? <div style={styles.noticeAction}><s-button href="/app/billing" variant="primary">Upgrade to Pro</s-button></div> : null}
-                {actionData.errors?.length ? (
-                  <ul style={styles.errorList}>
-                    {actionData.errors.map((item, index) => <li key={index}>{item.message}</li>)}
-                  </ul>
-                ) : null}
-              </div>
-            ) : null}
-
-            <div style={styles.panel}>
-              <div style={styles.panelHeader}>
-                <div>
-                  <h2 style={styles.heading}>Badge mappings</h2>
-                  <p style={styles.subdued}>Create mappings from Shopify product tags to storefront badge labels.</p>
-                </div>
-              </div>
-
-              {editingIndex !== null ? (
-                <BadgeForm
-                  form={form}
-                  error={error}
-                  onChange={setForm}
-                  onCancel={resetForm}
-                  onSave={saveDraft}
-                  submitLabel={editingIndex === -1 ? "Add draft" : "Update draft"}
-                />
+        <div style={styles.pageStack}>
+          {justSaved ? <div style={styles.success}>Mappings saved to Shopify.</div> : null}
+          {billing?.error ? (
+            <div style={styles.alert}>
+              <strong>Could not start billing.</strong>
+              <p style={styles.noticeText}>{billing.error}</p>
+            </div>
+          ) : null}
+          {billing?.enabled && !billing.hasPro ? (
+            <div style={overFreeLimit ? styles.warning : styles.info}>
+              <strong>Free plan: {billing.freeLimit} badges included.</strong>
+              <p style={styles.noticeText}>
+                {overFreeLimit
+                  ? `You have ${mappings.length} badges. Remove badges or upgrade to Pro before saving.`
+                  : `${Math.max(billing.freeLimit - mappings.length, 0)} free badge slots remaining.`}
+              </p>
+              {overFreeLimit ? <s-button href="/app/billing" variant="primary">Upgrade to Pro</s-button> : null}
+            </div>
+          ) : null}
+          {actionData?.error ? (
+            <div style={styles.alert}>
+              <strong>{actionData.error}</strong>
+              {actionData.billingRequired ? <div style={styles.noticeAction}><s-button href="/app/billing" variant="primary">Upgrade to Pro</s-button></div> : null}
+              {actionData.errors?.length ? (
+                <ul style={styles.errorList}>
+                  {actionData.errors.map((item, index) => <li key={index}>{item.message}</li>)}
+                </ul>
               ) : null}
+            </div>
+          ) : null}
 
-              {mappings.length === 0 ? (
-                <div style={styles.emptyState}>
-                  <h3 style={styles.emptyTitle}>No badge mappings yet</h3>
-                  <p style={styles.subdued}>Add a badge manually or use a preset, then save the mappings to Shopify.</p>
-                  <s-button variant="primary" onClick={() => startCreate()}>Add first badge</s-button>
-                </div>
-              ) : (
-                <div style={styles.list}>
-                  {mappings.map((mapping, index) => (
-                    <div key={mapping.tag} style={styles.row}>
-                      <div style={styles.rowContent}>
-                        <BadgePreview
-                          {...mapping}
-                        />
-                        <code style={styles.tag}>tag: {mapping.tag}</code>
-                      </div>
-                      <div style={styles.actions}>
-                        <s-button onClick={() => startEdit(index)}>Edit</s-button>
-                        <s-button tone="critical" onClick={() => updateMappings(mappings.filter((_, itemIndex) => itemIndex !== index))}>
-                          Delete
-                        </s-button>
-                      </div>
+          <div style={styles.heroPanel}>
+            <div style={styles.panelHeader}>
+              <div>
+                <h2 style={styles.heading}>Badge mappings</h2>
+                <p style={styles.subdued}>Create mappings from Shopify product tags to storefront badge labels.</p>
+              </div>
+            </div>
+
+            {editingIndex !== null ? (
+              <BadgeForm
+                form={form}
+                error={error}
+                onChange={setForm}
+                onCancel={resetForm}
+                onSave={saveDraft}
+                submitLabel={editingIndex === -1 ? "Add draft" : "Update draft"}
+              />
+            ) : null}
+          </div>
+
+          <div style={styles.presetPanel}>
+            <div style={styles.panelHeader}>
+              <div>
+                <h2 style={styles.heading}>Quick presets</h2>
+                <p style={styles.subdued}>Add ready-made campaign badges, then customize the design in Badge Studio.</p>
+              </div>
+            </div>
+            <div style={styles.categoryTabs}>
+              {PRESET_CATEGORIES.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setPresetCategory(category)}
+                  style={presetCategory === category ? styles.categoryTabActive : styles.categoryTab}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+            <div style={styles.presetList}>
+              {filteredPresets.map((preset) => {
+                const added = existingTags.has(preset.tag);
+                return (
+                  <div key={preset.tag} style={styles.presetCard}>
+                    <BadgePreview {...preset} />
+                    <div style={styles.presetMeta}>
+                      <strong>{preset.label}</strong>
+                      <code style={styles.tag}>tag: {preset.tag}</code>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <s-button disabled={added} onClick={() => addPreset(preset)}>{added ? "Added" : "Add"}</s-button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div style={styles.sideColumn}>
-            <div style={styles.panel}>
-              <h2 style={styles.heading}>Quick presets</h2>
-              <div style={styles.categoryTabs}>
-                {PRESET_CATEGORIES.map((category) => (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => setPresetCategory(category)}
-                    style={presetCategory === category ? styles.categoryTabActive : styles.categoryTab}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-              <div style={styles.presetList}>
-                {filteredPresets.map((preset) => {
-                  const added = existingTags.has(preset.tag);
-                  return (
-                    <div key={preset.tag} style={styles.presetRow}>
-                      <BadgePreview
-                        {...preset}
-                      />
-                      <s-button disabled={added} onClick={() => addPreset(preset)}>{added ? "Added" : "Add"}</s-button>
-                    </div>
-                  );
-                })}
+          <div style={styles.panel}>
+            <div style={styles.panelHeader}>
+              <div>
+                <h2 style={styles.heading}>Saved mappings</h2>
+                <p style={styles.subdued}>Draft changes stay here until you save mappings to Shopify.</p>
               </div>
             </div>
+            {mappings.length === 0 ? (
+              <div style={styles.emptyState}>
+                <h3 style={styles.emptyTitle}>No badge mappings yet</h3>
+                <p style={styles.subdued}>Add a badge manually or use a preset, then save the mappings to Shopify.</p>
+                <s-button variant="primary" onClick={() => startCreate()}>Add first badge</s-button>
+              </div>
+            ) : (
+              <div style={styles.list}>
+                {mappings.map((mapping, index) => (
+                  <div key={mapping.tag} style={styles.row}>
+                    <div style={styles.rowContent}>
+                      <BadgePreview
+                        {...mapping}
+                      />
+                      <code style={styles.tag}>tag: {mapping.tag}</code>
+                    </div>
+                    <div style={styles.actions}>
+                      <s-button onClick={() => startEdit(index)}>Edit</s-button>
+                      <s-button tone="critical" onClick={() => updateMappings(mappings.filter((_, itemIndex) => itemIndex !== index))}>
+                        Delete
+                      </s-button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
+          <div style={styles.supportGrid}>
             <div style={styles.panel}>
               <h2 style={styles.heading}>Plan</h2>
               <p style={styles.subdued}>
@@ -730,20 +743,27 @@ export default function BadgesPage() {
 }
 
 const styles = {
-  layout: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-    gap: 20,
-    alignItems: "start",
-  },
-  mainColumn: { minWidth: 0, display: "grid", gap: 12 },
-  sideColumn: { display: "grid", gap: 16, minWidth: 0 },
+  pageStack: { display: "grid", gap: 16, minWidth: 0 },
   panel: {
     border: "1px solid #dcdfe4",
     borderRadius: 8,
     background: "#ffffff",
     padding: 16,
   },
+  heroPanel: {
+    border: "1px solid #cfd6dd",
+    borderRadius: 8,
+    background: "#ffffff",
+    padding: 16,
+    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
+  },
+  presetPanel: {
+    border: "1px solid #dcdfe4",
+    borderRadius: 8,
+    background: "#ffffff",
+    padding: 16,
+  },
+  supportGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 16 },
   panelHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -868,8 +888,9 @@ const styles = {
   },
   error: { margin: "10px 0 0", color: "#8e1f0b", fontWeight: 650 },
   formFooter: { display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, padding: "0 20px 20px", flexWrap: "wrap", background: "#f9fafb" },
-  presetList: { display: "grid", gap: 10, marginTop: 12 },
-  presetRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 },
+  presetList: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginTop: 14 },
+  presetCard: { border: "1px solid #e1e7ef", borderRadius: 8, background: "#f9fafb", padding: 12, display: "grid", gap: 10, alignContent: "space-between", minHeight: 142 },
+  presetMeta: { display: "grid", gap: 4, color: "#202223" },
   categoryTabs: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 },
   categoryTab: { border: "1px solid #c9cccf", borderRadius: 999, background: "#ffffff", color: "#202223", padding: "5px 9px", cursor: "pointer", fontSize: 12 },
   categoryTabActive: { border: "1px solid #008060", borderRadius: 999, background: "#edf9f0", color: "#0b3d18", padding: "5px 9px", cursor: "pointer", fontSize: 12, fontWeight: 700 },
