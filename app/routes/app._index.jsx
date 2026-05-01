@@ -75,17 +75,12 @@ export default function HomePage() {
   const { badgeCount, hasBadges, publishedThemeName, themeLinks, billing } = useLoaderData();
   const planName = billing.enabled && billing.hasPro ? "Pro" : "Free";
   const withinFreeLimit = badgeCount <= billing.freeLimit;
-  const themeDetected = Boolean(publishedThemeName);
-  const billingReady = !billing.enabled || billing.hasPro || withinFreeLimit;
-  const completedSteps = [hasBadges, themeDetected, billingReady].filter(Boolean).length;
+  const tagsStepReady = hasBadges;
+  const completedSteps = [hasBadges, tagsStepReady].filter(Boolean).length;
   const progressPercent = Math.round((completedSteps / 3) * 100);
   const nextAction = !hasBadges
     ? { label: "Create badge mappings", href: "/app/badges" }
-    : !themeDetected
-      ? { label: "Open theme editor", href: themeLinks.home, target: "_top" }
-      : !billingReady
-        ? { label: "View pricing", href: "/app/pricing" }
-        : { label: "Manage badges", href: "/app/badges" };
+    : { label: "Open theme editor", href: themeLinks.home, target: "_top" };
 
   return (
     <s-page heading="Badges by Tag">
@@ -110,28 +105,12 @@ export default function HomePage() {
                 <Step complete={hasBadges} title="Create badge mappings" status={hasBadges ? `${badgeCount} saved` : "Required"} action={<s-button href="/app/badges">Open badges</s-button>}>
                   Add product-tag rules like new, sale, or bestseller and choose the badge design.
                 </Step>
-                <Step complete={themeDetected} title="Confirm your live theme" status={themeDetected ? "Detected" : "Needs check"}>
-                  {publishedThemeName ? `Detected live theme: ${publishedThemeName}.` : "Open the theme editor and select your live theme."}
-                </Step>
-                <Step complete={billingReady} title="Confirm plan limits" status={billingReady ? "Ready" : "Action needed"} action={!billingReady ? <s-button href="/app/pricing">View pricing</s-button> : null}>
-                  {billing.enabled
-                    ? withinFreeLimit || billing.hasPro
-                      ? "Your current badge count is allowed by the active plan."
-                      : `You have ${badgeCount} badges, which is above the free limit of ${billing.freeLimit}.`
-                    : "Billing is disabled for this development app. Plan enforcement can be enabled before public release."}
+                <Step complete={tagsStepReady} title="Add tags to products" status={tagsStepReady ? "Ready to tag" : "After mappings"}>
+                  Add the same tags to Shopify products that you used in your badge mappings, for example new, sale, or bestseller.
                 </Step>
                 <Step complete={false} title="Add the Product Badges block" status="Manual check" action={<s-button href={themeLinks.home} target="_top" variant="primary">Open theme editor</s-button>}>
                   Add the app block to a featured collection product card or product page, then preview a tagged product. This step is verified in the theme editor.
                 </Step>
-              </div>
-            </div>
-
-            <div style={styles.panel}>
-              <h2 style={styles.heading}>How badges work</h2>
-              <div style={styles.infoGrid}>
-                <div><h3 style={styles.cardTitle}>1. Tag products</h3><p style={styles.subdued}>Use Shopify product tags such as new, sale, eco, or bestseller.</p></div>
-                <div><h3 style={styles.cardTitle}>2. Map badges</h3><p style={styles.subdued}>Create badge labels and styles in the app. Mappings are saved in shop metafields.</p></div>
-                <div><h3 style={styles.cardTitle}>3. Render in theme</h3><p style={styles.subdued}>The theme app block reads the storefront-visible metafield and renders matching badges.</p></div>
               </div>
             </div>
           </div>
@@ -155,6 +134,15 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        <div style={styles.fullWidthPanel}>
+          <h2 style={styles.heading}>How badges work</h2>
+          <div style={styles.infoGrid}>
+            <div><h3 style={styles.cardTitle}>1. Map badges</h3><p style={styles.subdued}>Create badge labels and styles in the app for product tags like new, sale, or bestseller.</p></div>
+            <div><h3 style={styles.cardTitle}>2. Tag products</h3><p style={styles.subdued}>Add those same tags to products in Shopify admin so the app can match them on the storefront.</p></div>
+            <div><h3 style={styles.cardTitle}>3. Render in theme</h3><p style={styles.subdued}>The theme app block reads the storefront-visible metafield and shows matching badges.</p></div>
+          </div>
+        </div>
       </s-section>
     </s-page>
   );
@@ -165,6 +153,7 @@ const styles = {
   mainStack: { display: "grid", gap: 16, minWidth: 0 },
   sideStack: { display: "grid", gap: 16, minWidth: 0 },
   panel: { border: "1px solid #dcdfe4", borderRadius: 8, background: "#fff", padding: 16 },
+  fullWidthPanel: { border: "1px solid #dcdfe4", borderRadius: 8, background: "#fff", padding: 16, marginTop: 20 },
   panelHeader: { display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start" },
   heading: { margin: 0, fontSize: 16, lineHeight: "24px", fontWeight: 700, color: "#202223" },
   subdued: { margin: "6px 0 0", color: "#616a75", lineHeight: "20px" },
