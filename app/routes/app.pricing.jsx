@@ -70,6 +70,25 @@ function CompareRow({ label, free, pro }) {
   );
 }
 
+function DowngradeAction({ cancelUrl, freeLimit }) {
+  function handleDowngrade() {
+    const confirmed = window.confirm(
+      `Downgrading to Free keeps the first ${freeLimit} badge mappings and removes any extra mappings. Continue?`,
+    );
+
+    if (confirmed) {
+      window.location.assign(cancelUrl);
+    }
+  }
+
+  return (
+    <div style={styles.downgradeStack}>
+      <p style={styles.warningText}>Downgrading keeps the first {freeLimit} badge mappings and removes any extra mappings.</p>
+      <button type="button" onClick={handleDowngrade} style={styles.dangerButton}>Downgrade to Free</button>
+    </div>
+  );
+}
+
 export default function PricingPage() {
   const { billing } = useLoaderData();
   const currentPlan = billing.enabled && billing.hasPro ? "Pro" : "Free";
@@ -83,10 +102,14 @@ export default function PricingPage() {
             <p style={styles.subdued}>Start with a small free setup, then upgrade when the store needs more badge campaigns.</p>
           </div>
           <div style={styles.currentPlanBox}>
-            <span style={styles.currentPlanLabel}>Current plan</span>
-            <strong>{currentPlan}</strong>
-            <span style={styles.currentPlanLabel}>Limit</span>
-            <strong>{billing.limitLabel}</strong>
+            <div style={styles.currentPlanRow}>
+              <span style={styles.currentPlanLabel}>Current plan</span>
+              <strong>{currentPlan}</strong>
+            </div>
+            <div style={styles.currentPlanRow}>
+              <span style={styles.currentPlanLabel}>Limit</span>
+              <strong>{billing.limitLabel}</strong>
+            </div>
           </div>
         </div>
 
@@ -133,7 +156,7 @@ export default function PricingPage() {
             ]}
             action={
               billing.hasPro ? (
-                <a href={billing.cancelUrl} style={styles.dangerButton}>Downgrade to Free</a>
+                <DowngradeAction cancelUrl={billing.cancelUrl} freeLimit={billing.freeLimit} />
               ) :
               billing.enabled ? <a href={billing.upgradeUrl} style={styles.primaryButton}>Upgrade to Pro</a> :
               <s-button disabled>Available after public setup</s-button>
@@ -191,10 +214,13 @@ const styles = {
   subdued: { margin: 0, color: "#616a75", lineHeight: "20px" },
   featureList: { margin: 0, paddingLeft: 0, color: "#202223", lineHeight: "24px", listStyle: "none" },
   action: { marginTop: 8 },
+  downgradeStack: { display: "grid", gap: 10 },
+  warningText: { margin: 0, color: "#6f4e00", lineHeight: "20px", fontSize: 13 },
   primaryButton: { display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 36, padding: "7px 12px", borderRadius: 6, background: "#008060", color: "#fff", fontWeight: 700, textDecoration: "none", border: "1px solid #008060" },
-  dangerButton: { display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 36, padding: "7px 12px", borderRadius: 6, background: "#ffffff", color: "#8e1f0b", fontWeight: 700, border: "1px solid #d72c0d", textDecoration: "none" },
+  dangerButton: { display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 36, padding: "7px 12px", borderRadius: 6, background: "#ffffff", color: "#8e1f0b", fontWeight: 700, border: "1px solid #d72c0d", textDecoration: "none", cursor: "pointer" },
   currentBadge: { borderRadius: 999, background: "#edf9f0", color: "#0b3d18", padding: "2px 8px", fontSize: 12, fontWeight: 700 },
-  currentPlanBox: { border: "1px solid #dcdfe4", borderRadius: 8, padding: "10px 12px", minWidth: 140, display: "grid", gap: 2 },
+  currentPlanBox: { border: "1px solid #dcdfe4", borderRadius: 8, padding: "10px 12px", minWidth: 180, display: "grid", gap: 8 },
+  currentPlanRow: { display: "flex", justifyContent: "space-between", gap: 18, alignItems: "center" },
   currentPlanLabel: { color: "#616a75", fontSize: 12, lineHeight: "16px" },
   panel: { border: "1px solid #dcdfe4", borderRadius: 8, background: "#fff", padding: 16, marginTop: 16 },
   compareTable: { overflowX: "auto" },

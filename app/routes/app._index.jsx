@@ -186,7 +186,7 @@ const styles = {
   cardTitle: { margin: 0, fontSize: 14, lineHeight: "20px", fontWeight: 700 },
   metricRow: { display: "flex", justifyContent: "space-between", gap: 12, padding: "10px 0", borderBottom: "1px solid #edf0f2" },
   warning: { marginTop: 12, border: "1px solid #e5c56f", borderRadius: 8, background: "#fff5db", color: "#4f3500", padding: 12, lineHeight: "20px" },
-  buttonStack: { display: "grid", gap: 8, marginTop: 14 },
+  buttonStack: { display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" },
 };
 
 export const headers = (headersArgs) => boundary.headers(headersArgs);
