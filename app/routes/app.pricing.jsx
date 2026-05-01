@@ -88,7 +88,7 @@ export default function PricingPage() {
 
         {billing.error ? (
           <div style={styles.alert}>
-            <strong>Could not start billing.</strong>
+            <strong>Could not update billing.</strong>
             <p style={styles.noticeText}>{billing.error}</p>
           </div>
         ) : null}
@@ -124,9 +124,7 @@ export default function PricingPage() {
             ]}
             action={
               billing.hasPro ? (
-                <form method="post" action={billing.cancelUrl} style={styles.inlineForm}>
-                  <button type="submit" style={styles.dangerButton}>Downgrade to Free</button>
-                </form>
+                <a href={billing.cancelUrl} style={styles.dangerButton}>Downgrade to Free</a>
               ) :
               billing.enabled ? <a href={billing.upgradeUrl} style={styles.primaryButton}>Upgrade to Pro</a> :
               <s-button disabled>Available after public setup</s-button>
@@ -184,9 +182,8 @@ const styles = {
   subdued: { margin: 0, color: "#616a75", lineHeight: "20px" },
   featureList: { margin: 0, paddingLeft: 0, color: "#202223", lineHeight: "24px", listStyle: "none" },
   action: { marginTop: 8 },
-  inlineForm: { margin: 0 },
   primaryButton: { display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 36, padding: "7px 12px", borderRadius: 6, background: "#008060", color: "#fff", fontWeight: 700, textDecoration: "none", border: "1px solid #008060" },
-  dangerButton: { minHeight: 36, padding: "7px 12px", borderRadius: 6, background: "#ffffff", color: "#8e1f0b", fontWeight: 700, border: "1px solid #d72c0d", cursor: "pointer" },
+  dangerButton: { display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 36, padding: "7px 12px", borderRadius: 6, background: "#ffffff", color: "#8e1f0b", fontWeight: 700, border: "1px solid #d72c0d", textDecoration: "none" },
   currentBadge: { borderRadius: 999, background: "#edf9f0", color: "#0b3d18", padding: "2px 8px", fontSize: 12, fontWeight: 700 },
   currentPlanBox: { border: "1px solid #dcdfe4", borderRadius: 8, padding: "10px 12px", minWidth: 140, display: "grid", gap: 2 },
   currentPlanLabel: { color: "#616a75", fontSize: 12, lineHeight: "16px" },

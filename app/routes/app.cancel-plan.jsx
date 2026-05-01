@@ -10,11 +10,15 @@ function billingErrorMessage(error) {
   return firstMessage || error?.message || "Shopify could not cancel the active subscription.";
 }
 
-export const loader = async () => {
-  throw redirect("/app/pricing");
+export const loader = async ({ request }) => {
+  return cancelPlan(request);
 };
 
 export const action = async ({ request }) => {
+  return cancelPlan(request);
+};
+
+async function cancelPlan(request) {
   const { cancelProPlan, BILLING_ENABLED } = await import("../lib/billing.server.js");
   const { billing, session } = await authenticate.admin(request);
   const pricingUrl = buildPricingUrl(request, session.shop);
@@ -36,7 +40,7 @@ export const action = async ({ request }) => {
   }
 
   throw redirect(pricingUrl);
-};
+}
 
 function buildPricingUrl(request, shopDomain, extraParams = {}) {
   const url = new URL(request.url);
