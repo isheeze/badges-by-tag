@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { data, useActionData, useLoaderData, useNavigation, useSubmit } from "react-router";
 import { authenticate } from "../shopify.server";
@@ -316,6 +316,9 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
               <BadgePreview
                 label={preset.name}
                 {...preset}
+                badgeWidth={preset.templateType === "burst" ? 54 : 104}
+                badgeHeight={preset.templateType === "burst" ? 54 : 32}
+                rotation={0}
               />
               <span style={styles.templateName}>{preset.name}</span>
             </button>
@@ -475,6 +478,7 @@ export default function BadgesPage() {
   const [error, setError] = useState("");
   const [dirty, setDirty] = useState(false);
   const [presetCategory, setPresetCategory] = useState("All");
+  const studioRef = useRef(null);
 
   useEffect(() => {
     setMappings(initialMappings ?? []);
@@ -508,16 +512,24 @@ export default function BadgesPage() {
     setError("");
   }
 
+  function scrollToStudio() {
+    window.setTimeout(() => {
+      studioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  }
+
   function startCreate(mapping = emptyForm) {
     setForm({ ...emptyForm, ...mapping });
     setEditingIndex(-1);
     setError("");
+    scrollToStudio();
   }
 
   function startEdit(index) {
     setForm({ ...emptyForm, ...mappings[index] });
     setEditingIndex(index);
     setError("");
+    scrollToStudio();
   }
 
   function saveDraft() {
@@ -621,15 +633,8 @@ export default function BadgesPage() {
             </div>
           ) : null}
 
-          <div style={styles.heroPanel}>
-            <div style={styles.panelHeader}>
-              <div>
-                <h2 style={styles.heading}>Badge mappings</h2>
-                <p style={styles.subdued}>Create mappings from Shopify product tags to storefront badge labels.</p>
-              </div>
-            </div>
-
-            {editingIndex !== null ? (
+          {editingIndex !== null ? (
+            <div ref={studioRef} style={styles.heroPanel}>
               <BadgeForm
                 form={form}
                 error={error}
@@ -638,44 +643,46 @@ export default function BadgesPage() {
                 onSave={saveDraft}
                 submitLabel={editingIndex === -1 ? "Add draft" : "Update draft"}
               />
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
-          <div style={styles.presetPanel}>
-            <div style={styles.panelHeader}>
-              <div>
-                <h2 style={styles.heading}>Quick presets</h2>
-                <p style={styles.subdued}>Add ready-made campaign badges, then customize the design in Badge Studio.</p>
+          {mappings.length === 0 ? (
+            <div style={styles.presetPanel}>
+              <div style={styles.panelHeader}>
+                <div>
+                  <h2 style={styles.heading}>Quick presets</h2>
+                  <p style={styles.subdued}>Add ready-made campaign badges, then customize the design in Badge Studio.</p>
+                </div>
+              </div>
+              <div style={styles.categoryTabs}>
+                {PRESET_CATEGORIES.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setPresetCategory(category)}
+                    style={presetCategory === category ? styles.categoryTabActive : styles.categoryTab}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+              <div style={styles.presetList}>
+                {filteredPresets.map((preset) => {
+                  const added = existingTags.has(preset.tag);
+                  return (
+                    <div key={preset.tag} style={styles.presetCard}>
+                      <BadgePreview {...preset} />
+                      <div style={styles.presetMeta}>
+                        <strong>{preset.label}</strong>
+                        <code style={styles.tag}>tag: {preset.tag}</code>
+                      </div>
+                      <s-button disabled={added} onClick={() => addPreset(preset)}>{added ? "Added" : "Add"}</s-button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div style={styles.categoryTabs}>
-              {PRESET_CATEGORIES.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setPresetCategory(category)}
-                  style={presetCategory === category ? styles.categoryTabActive : styles.categoryTab}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-            <div style={styles.presetList}>
-              {filteredPresets.map((preset) => {
-                const added = existingTags.has(preset.tag);
-                return (
-                  <div key={preset.tag} style={styles.presetCard}>
-                    <BadgePreview {...preset} />
-                    <div style={styles.presetMeta}>
-                      <strong>{preset.label}</strong>
-                      <code style={styles.tag}>tag: {preset.tag}</code>
-                    </div>
-                    <s-button disabled={added} onClick={() => addPreset(preset)}>{added ? "Added" : "Add"}</s-button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          ) : null}
 
           <div style={styles.panel}>
             <div style={styles.panelHeader}>
@@ -756,6 +763,7 @@ const styles = {
     background: "#ffffff",
     padding: 16,
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
+    scrollMarginTop: 18,
   },
   presetPanel: {
     border: "1px solid #dcdfe4",
@@ -810,9 +818,9 @@ const styles = {
   previewLines: { display: "grid", gap: 8, marginTop: 12 },
   templateShelf: { padding: "18px 20px", borderTop: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb", background: "#ffffff" },
   sectionHeader: { display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 },
-  templateGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 },
-  templateCard: { minHeight: 96, border: "1px solid #d7dde5", borderRadius: 8, background: "#ffffff", padding: 10, display: "grid", gap: 9, justifyItems: "center", alignContent: "center", cursor: "pointer" },
-  templateCardActive: { minHeight: 96, border: "2px solid #008060", borderRadius: 8, background: "#f0fdf4", padding: 9, display: "grid", gap: 9, justifyItems: "center", alignContent: "center", cursor: "pointer" },
+  templateGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))", gap: 8 },
+  templateCard: { minHeight: 78, border: "1px solid #d7dde5", borderRadius: 8, background: "#ffffff", padding: 8, display: "grid", gap: 6, justifyItems: "center", alignContent: "center", cursor: "pointer", overflow: "hidden" },
+  templateCardActive: { minHeight: 78, border: "2px solid #008060", borderRadius: 8, background: "#f0fdf4", padding: 7, display: "grid", gap: 6, justifyItems: "center", alignContent: "center", cursor: "pointer", overflow: "hidden" },
   templateName: { color: "#374151", fontSize: 12, fontWeight: 750 },
   controlSurface: { display: "grid", gap: 18, padding: 20, background: "#f9fafb" },
   controlGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, alignItems: "start" },
