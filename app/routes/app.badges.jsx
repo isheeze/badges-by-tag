@@ -279,63 +279,78 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
 
   return (
     <div style={styles.formPanel}>
-      <div style={styles.designPresetPanel}>
-        <div>
-          <h3 style={styles.smallHeading}>Design preset</h3>
-          <p style={styles.microCopy}>Apply a starting style, then adjust the fields below.</p>
+      <div style={styles.studioHero}>
+        <div style={styles.studioHeroCopy}>
+          <span style={styles.eyebrow}>Badge studio</span>
+          <h3 style={styles.studioTitle}>{form.label || "Design a badge"}</h3>
+          <p style={styles.studioText}>Choose a template, shape the badge, then fine tune text placement for the storefront.</p>
         </div>
-        <div style={styles.designPresetGrid}>
+        <div style={styles.studioPreviewStage}>
+          <div style={styles.productPreview}>
+            <div style={styles.productImagePreview}>
+              <BadgePreview {...form} textColor={previewTextColor} />
+            </div>
+            <div style={styles.previewLines}>
+              <span />
+              <span />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.templateShelf}>
+        <div style={styles.sectionHeader}>
+          <div>
+            <h3 style={styles.smallHeading}>Template styles</h3>
+            <p style={styles.microCopy}>Start with a polished style and adjust it below.</p>
+          </div>
+        </div>
+        <div style={styles.templateGrid}>
           {DESIGN_PRESETS.map((preset) => (
             <button
               key={preset.name}
               type="button"
               onClick={() => applyDesignPreset(preset)}
-              style={styles.designPresetButton}
+              style={form.templateType === preset.templateType ? styles.templateCardActive : styles.templateCard}
             >
               <BadgePreview
                 label={preset.name}
                 {...preset}
               />
+              <span style={styles.templateName}>{preset.name}</span>
             </button>
           ))}
         </div>
       </div>
-      <div style={styles.builderGrid}>
-        <div style={styles.builderFields}>
-          <FieldGroup title="Content">
+
+      <div style={styles.controlSurface}>
+        <FieldGroup title="Content">
+          <div style={styles.primaryFormGrid}>
+            <label style={styles.field}>
+              <span style={styles.label}>Product tag</span>
+              <input
+                value={form.tag}
+                onChange={(event) => onChange({ ...form, tag: event.target.value })}
+                placeholder="new"
+                style={styles.input}
+              />
+            </label>
+            <label style={styles.field}>
+              <span style={styles.label}>Badge label</span>
+              <input
+                value={form.label}
+                onChange={(event) => onChange({ ...form, label: event.target.value })}
+                placeholder="New Arrival"
+                style={styles.input}
+              />
+            </label>
+            <SelectField label="Template" value={form.templateType} options={BADGE_STYLE_OPTIONS.templateTypes} onChange={(value) => onChange({ ...form, templateType: value })} />
+          </div>
+        </FieldGroup>
+
+        <div style={styles.controlGrid}>
+          <FieldGroup title="Typography">
             <div style={styles.formGrid}>
-              <label style={styles.field}>
-                <span style={styles.label}>Product tag</span>
-                <input
-                  value={form.tag}
-                  onChange={(event) => onChange({ ...form, tag: event.target.value })}
-                  placeholder="new"
-                  style={styles.input}
-                />
-              </label>
-              <label style={styles.field}>
-                <span style={styles.label}>Badge label</span>
-                <input
-                  value={form.label}
-                  onChange={(event) => onChange({ ...form, label: event.target.value })}
-                  placeholder="New Arrival"
-                  style={styles.input}
-                />
-              </label>
-              <SelectField label="Template" value={form.templateType} options={BADGE_STYLE_OPTIONS.templateTypes} onChange={(value) => onChange({ ...form, templateType: value })} />
-            </div>
-          </FieldGroup>
-          <FieldGroup title="Colors and type">
-            <div style={styles.formGrid}>
-              <label style={styles.field}>
-                <span style={styles.label}>Background color</span>
-                <input
-                  type="color"
-                  value={form.bgColor}
-                  onChange={(event) => onChange({ ...form, bgColor: event.target.value })}
-                  style={{ ...styles.input, padding: 4 }}
-                />
-              </label>
               <label style={styles.field}>
                 <span style={styles.label}>Text color</span>
                 <input
@@ -348,15 +363,38 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
               <SelectField label="Font" value={form.fontFamily} options={BADGE_STYLE_OPTIONS.fontFamilies} onChange={(value) => onChange({ ...form, fontFamily: value })} />
               <SelectField label="Weight" value={form.fontWeight} options={BADGE_STYLE_OPTIONS.fontWeights} onChange={(value) => onChange({ ...form, fontWeight: value })} />
               <SelectField label="Text case" value={form.textCase} options={BADGE_STYLE_OPTIONS.textCases} onChange={(value) => onChange({ ...form, textCase: value })} />
+              <SelectField label="Text align" value={form.textAlign} options={BADGE_STYLE_OPTIONS.textAligns} onChange={(value) => onChange({ ...form, textAlign: value })} />
               <SelectField label="Text shadow" value={form.textShadow} options={BADGE_STYLE_OPTIONS.textShadows} onChange={(value) => onChange({ ...form, textShadow: value })} />
             </div>
           </FieldGroup>
-          <FieldGroup title="Shape and image">
+
+          <FieldGroup title="Badge style">
             <div style={styles.formGrid}>
+              <label style={styles.field}>
+                <span style={styles.label}>Background color</span>
+                <input
+                  type="color"
+                  value={form.bgColor}
+                  onChange={(event) => onChange({ ...form, bgColor: event.target.value })}
+                  style={{ ...styles.input, padding: 4 }}
+                />
+              </label>
               <SelectField label="Shape" value={form.shape} options={BADGE_STYLE_OPTIONS.shapes} onChange={(value) => onChange({ ...form, shape: value })} />
               <SelectField label="Size" value={form.size} options={BADGE_STYLE_OPTIONS.sizes} onChange={(value) => onChange({ ...form, size: value })} />
               <SelectField label="Border" value={form.border} options={BADGE_STYLE_OPTIONS.borders} onChange={(value) => onChange({ ...form, border: value })} />
               <SelectField label="Shadow" value={form.shadow} options={BADGE_STYLE_OPTIONS.shadows} onChange={(value) => onChange({ ...form, shadow: value })} />
+              <RangeField label="Opacity" value={form.opacity} min={20} max={100} unit="%" onChange={(value) => onChange({ ...form, opacity: value })} />
+            </div>
+          </FieldGroup>
+
+          <FieldGroup title="Canvas and image">
+            <div style={styles.formGrid}>
+              <RangeField label="Width" value={form.badgeWidth} min={64} max={260} unit="px" onChange={(value) => onChange({ ...form, badgeWidth: value })} />
+              <RangeField label="Height" value={form.badgeHeight} min={24} max={140} unit="px" onChange={(value) => onChange({ ...form, badgeHeight: value })} />
+              <RangeField label="Text X" value={form.textX} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textX: value })} />
+              <RangeField label="Text Y" value={form.textY} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textY: value })} />
+              <RangeField label="Rotation" value={form.rotation} min={-25} max={25} unit="deg" onChange={(value) => onChange({ ...form, rotation: value })} />
+              <SelectField label="Image fit" value={form.imageFit} options={BADGE_STYLE_OPTIONS.imageFits} onChange={(value) => onChange({ ...form, imageFit: value })} />
               <label style={styles.fieldWide}>
                 <span style={styles.label}>Image background URL</span>
                 <input
@@ -366,32 +404,8 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
                   style={styles.input}
                 />
               </label>
-              <SelectField label="Image fit" value={form.imageFit} options={BADGE_STYLE_OPTIONS.imageFits} onChange={(value) => onChange({ ...form, imageFit: value })} />
             </div>
           </FieldGroup>
-          <FieldGroup title="Size and text position">
-            <div style={styles.formGrid}>
-              <RangeField label="Width" value={form.badgeWidth} min={64} max={260} unit="px" onChange={(value) => onChange({ ...form, badgeWidth: value })} />
-              <RangeField label="Height" value={form.badgeHeight} min={24} max={140} unit="px" onChange={(value) => onChange({ ...form, badgeHeight: value })} />
-              <RangeField label="Text X" value={form.textX} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textX: value })} />
-              <RangeField label="Text Y" value={form.textY} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textY: value })} />
-              <SelectField label="Text align" value={form.textAlign} options={BADGE_STYLE_OPTIONS.textAligns} onChange={(value) => onChange({ ...form, textAlign: value })} />
-              <RangeField label="Rotation" value={form.rotation} min={-25} max={25} unit="deg" onChange={(value) => onChange({ ...form, rotation: value })} />
-              <RangeField label="Opacity" value={form.opacity} min={20} max={100} unit="%" onChange={(value) => onChange({ ...form, opacity: value })} />
-            </div>
-          </FieldGroup>
-        </div>
-        <div style={styles.previewPanel}>
-          <span style={styles.previewLabel}>Live preview</span>
-          <div style={styles.productPreview}>
-            <div style={styles.productImagePreview}>
-              <BadgePreview {...form} textColor={previewTextColor} />
-            </div>
-            <div style={styles.previewLines}>
-              <span />
-              <span />
-            </div>
-          </div>
         </div>
       </div>
       {error ? <p style={styles.error}>{error}</p> : null}
@@ -764,25 +778,26 @@ const styles = {
   rowContent: { display: "flex", alignItems: "center", gap: 12, minWidth: 0, flexWrap: "wrap" },
   tag: { color: "#616a75", fontSize: 13 },
   actions: { display: "flex", gap: 8, alignItems: "center" },
-  formPanel: { border: "1px solid #dcdfe4", borderRadius: 8, padding: 14, marginBottom: 14, background: "#f9fafb" },
-  designPresetPanel: { display: "grid", gap: 10, marginBottom: 14 },
-  designPresetGrid: { display: "flex", gap: 8, flexWrap: "wrap" },
-  designPresetButton: {
-    minHeight: 38,
-    border: "1px solid #c9cccf",
-    borderRadius: 6,
-    background: "#ffffff",
-    padding: "6px 8px",
-    cursor: "pointer",
-  },
-  builderGrid: { display: "grid", gridTemplateColumns: "minmax(0, 1.4fr) minmax(220px, 0.8fr)", gap: 16, alignItems: "start" },
-  builderFields: { display: "grid", gap: 14, minWidth: 0 },
-  fieldGroup: { display: "grid", gap: 10 },
-  previewPanel: { position: "sticky", top: 12, border: "1px solid #dcdfe4", borderRadius: 8, background: "#ffffff", padding: 12 },
-  previewLabel: { color: "#616a75", fontSize: 12, fontWeight: 700 },
-  productPreview: { marginTop: 10, border: "1px solid #dcdfe4", borderRadius: 8, padding: 12, background: "#f6f6f7" },
-  productImagePreview: { position: "relative", minHeight: 190, borderRadius: 8, background: "linear-gradient(135deg, #f1f5f9, #dbeafe)", display: "grid", placeItems: "start", padding: 14, overflow: "hidden" },
+  formPanel: { border: "1px solid #cfd6dd", borderRadius: 8, padding: 0, marginBottom: 14, background: "#ffffff", overflow: "hidden", boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)" },
+  studioHero: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: 20, alignItems: "stretch", padding: 20, background: "linear-gradient(135deg, #f8fafc, #eef4ff)" },
+  studioHeroCopy: { display: "grid", alignContent: "center", gap: 8, minWidth: 0 },
+  eyebrow: { color: "#0b5cab", fontSize: 12, lineHeight: "16px", fontWeight: 800, textTransform: "uppercase" },
+  studioTitle: { margin: 0, color: "#111827", fontSize: 24, lineHeight: "30px", fontWeight: 800 },
+  studioText: { margin: 0, color: "#4b5563", lineHeight: "21px", maxWidth: 420 },
+  studioPreviewStage: { minWidth: 0 },
+  productPreview: { border: "1px solid #d8dee8", borderRadius: 8, padding: 14, background: "#ffffff", boxShadow: "0 10px 28px rgba(15, 23, 42, 0.10)" },
+  productImagePreview: { position: "relative", minHeight: 250, borderRadius: 8, background: "linear-gradient(135deg, #f8fafc 0%, #e0e7ff 46%, #dbeafe 100%)", display: "grid", placeItems: "start", padding: 18, overflow: "hidden" },
   previewLines: { display: "grid", gap: 8, marginTop: 12 },
+  templateShelf: { padding: "18px 20px", borderTop: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb", background: "#ffffff" },
+  sectionHeader: { display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 },
+  templateGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 },
+  templateCard: { minHeight: 96, border: "1px solid #d7dde5", borderRadius: 8, background: "#ffffff", padding: 10, display: "grid", gap: 9, justifyItems: "center", alignContent: "center", cursor: "pointer" },
+  templateCardActive: { minHeight: 96, border: "2px solid #008060", borderRadius: 8, background: "#f0fdf4", padding: 9, display: "grid", gap: 9, justifyItems: "center", alignContent: "center", cursor: "pointer" },
+  templateName: { color: "#374151", fontSize: 12, fontWeight: 750 },
+  controlSurface: { display: "grid", gap: 18, padding: 20, background: "#f9fafb" },
+  controlGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, alignItems: "start" },
+  primaryFormGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12 },
+  fieldGroup: { display: "grid", gap: 12, border: "1px solid #e1e7ef", borderRadius: 8, background: "#ffffff", padding: 14 },
   range: { width: "100%" },
   fieldWide: { display: "grid", gap: 6, fontSize: 13, fontWeight: 650, color: "#202223", gridColumn: "1 / -1" },
   formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 },
@@ -852,7 +867,7 @@ const styles = {
     bold: "0 2px 6px rgba(0, 0, 0, 0.38)",
   },
   error: { margin: "10px 0 0", color: "#8e1f0b", fontWeight: 650 },
-  formFooter: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginTop: 14, flexWrap: "wrap" },
+  formFooter: { display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, padding: "0 20px 20px", flexWrap: "wrap", background: "#f9fafb" },
   presetList: { display: "grid", gap: 10, marginTop: 12 },
   presetRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 },
   categoryTabs: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 },
