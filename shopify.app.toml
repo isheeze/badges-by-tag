@@ -1,0 +1,33 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "596a055d2bc391bf5bff8f6bda528f5c"
+name = "Badges by Tag"
+application_url = "https://example.com"
+embedded = true
+
+[access_scopes]
+# read_themes: detect the live theme and build theme editor deep links.
+scopes = "read_themes"
+
+[webhooks]
+api_version = "2026-04"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = [ "app/uninstalled" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/scopes_update"
+  topics = [ "app/scopes_update" ]
+
+  [webhooks.privacy_compliance]
+  customer_deletion_url = "https://example.com/webhooks/customers/redact"
+  customer_data_request_url = "https://example.com/webhooks/customers/data_request"
+  shop_deletion_url = "https://example.com/webhooks/shop/redact"
+
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true

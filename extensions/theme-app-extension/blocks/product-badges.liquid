@@ -1,0 +1,199 @@
+{% comment %}
+  Product Badges block
+  Renders badge pills for the current product when its tags match mappings saved by the app.
+{% endcomment %}
+
+{{ 'product-badges.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'product-badges.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign mappings = shop.metafields.badges_by_tag.mappings.value
+  assign current_product = product
+  if current_product == blank and block.settings.product != blank
+    assign current_product = block.settings.product
+  endif
+  assign max_badges = block.settings.max_badges | default: 3
+  assign position = block.settings.position | default: 'inline'
+  assign layout = block.settings.layout | default: 'wrap'
+  assign alignment = block.settings.alignment | default: 'left'
+  assign overlay_offset = block.settings.overlay_offset | default: 8
+  assign font_size = block.settings.font_size | default: 12
+  assign hide_on_mobile = block.settings.hide_on_mobile | default: false
+  assign show_first_only = block.settings.show_first_only | default: false
+  assign display_limit = max_badges
+  if show_first_only
+    assign display_limit = 1
+  endif
+  assign product_tags = current_product.tags | join: ',' | downcase | split: ','
+-%}
+
+{%- if current_product == blank -%}
+  {%- if request.design_mode -%}
+    <div class="bbt-empty" {{ block.shopify_attributes }}>
+      Badges by Tag needs a product context. Add this block inside a product section or product card.
+    </div>
+  {%- endif -%}
+{%- elsif mappings == blank -%}
+  {%- if request.design_mode -%}
+    <div class="bbt-empty" {{ block.shopify_attributes }}>
+      No badge mappings saved yet. Open the app, create mappings, then save them.
+    </div>
+  {%- endif -%}
+{%- else -%}
+  {%- assign rendered_count = 0 -%}
+  <div
+    class="bbt-badges"
+    data-position="{{ position }}"
+    data-layout="{{ layout }}"
+    data-alignment="{{ alignment }}"
+    data-overlay-offset="{{ overlay_offset }}"
+    data-font-size="{{ font_size }}"
+    data-hide-mobile="{{ hide_on_mobile }}"
+    {{ block.shopify_attributes }}
+  >
+    {%- for mapping in mappings -%}
+      {%- if rendered_count >= display_limit -%}
+        {%- break -%}
+      {%- endif -%}
+
+      {%- liquid
+        assign mapping_tag = mapping.tag | strip | downcase
+        assign mapping_label = mapping.label | strip
+        assign background_color = mapping.bgColor | default: '#16a34a'
+        assign text_color = mapping.textColor | default: '#ffffff'
+        assign badge_shape = mapping.shape | default: 'pill'
+        assign badge_size = mapping.size | default: 'medium'
+        assign badge_text_case = mapping.textCase | default: 'uppercase'
+        assign badge_border = mapping.border | default: 'none'
+        assign badge_shadow = mapping.shadow | default: 'soft'
+        assign tag_matched = false
+      -%}
+
+      {%- if mapping_tag != blank and mapping_label != blank -%}
+        {%- for product_tag in product_tags -%}
+          {%- assign normalized_product_tag = product_tag | strip -%}
+          {%- if normalized_product_tag == mapping_tag -%}
+            {%- assign tag_matched = true -%}
+            {%- break -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+
+      {%- if tag_matched -%}
+        <span
+          class="bbt-badge"
+          data-shape="{{ badge_shape }}"
+          data-size="{{ badge_size }}"
+          data-text-case="{{ badge_text_case }}"
+          data-border="{{ badge_border }}"
+          data-shadow="{{ badge_shadow }}"
+          style="background-color: {{ background_color }}; color: {{ text_color }};"
+          aria-label="{{ mapping_label | escape }}"
+        >
+          {{ mapping_label | escape }}
+        </span>
+        {%- assign rendered_count = rendered_count | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+
+    {%- if rendered_count == 0 and request.design_mode -%}
+      <div class="bbt-empty bbt-empty--inside">
+        This product does not have a tag that matches a saved badge.
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Product Badges",
+  "target": "section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Displays badges for products whose tags match mappings saved in the Badges by Tag app."
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "autofill": true
+    },
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Position",
+      "options": [
+        { "value": "inline", "label": "Inline" },
+        { "value": "top-left", "label": "Top left overlay" },
+        { "value": "top-right", "label": "Top right overlay" }
+      ],
+      "default": "inline"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "options": [
+        { "value": "wrap", "label": "Wrap" },
+        { "value": "row", "label": "Single row" },
+        { "value": "column", "label": "Column" },
+        { "value": "compact", "label": "Compact" }
+      ],
+      "default": "wrap"
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "range",
+      "id": "max_badges",
+      "label": "Maximum badges",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "checkbox",
+      "id": "show_first_only",
+      "label": "Show only the first matching badge",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font size",
+      "min": 10,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "overlay_offset",
+      "label": "Overlay spacing",
+      "min": 0,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_on_mobile",
+      "label": "Hide on mobile",
+      "default": false
+    }
+  ]
+}
+{% endschema %}
