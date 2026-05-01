@@ -4,11 +4,11 @@ Use this before submitting the public Shopify app for review.
 
 ## Required production settings
 
-- Replace all `https://example.com` values in `shopify.app.toml` with the deployed HTTPS app URL.
-- Set `SHOPIFY_APP_URL` to the same deployed HTTPS app URL.
-- Set `SUPPORT_EMAIL` to a monitored support inbox.
-- Set `PRIVACY_POLICY_URL` to the public privacy policy URL.
-- Set `TERMS_URL` to the public terms URL.
+- Confirm `shopify.app.toml` uses the deployed app URL: `https://badges-by-tag.onrender.com`.
+- Set `SHOPIFY_APP_URL=https://badges-by-tag.onrender.com`.
+- Set `SUPPORT_EMAIL=badgesbytag@gmail.com`.
+- Set `PRIVACY_POLICY_URL=https://badges-by-tag.netlify.app/privacy`.
+- Set `TERMS_URL=https://badges-by-tag.netlify.app/terms`.
 - Set `SHOPIFY_APP_LISTING_URL` after the Shopify listing exists.
 - Set `BILLING_ENABLED=1` only after the app is configured for public distribution and Shopify Billing API can be used.
 

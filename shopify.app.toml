@@ -2,7 +2,7 @@
 
 client_id = "596a055d2bc391bf5bff8f6bda528f5c"
 name = "Badges by Tag"
-application_url = "https://example.com"
+application_url = "https://badges-by-tag.onrender.com"
 embedded = true
 
 [access_scopes]
@@ -21,12 +21,12 @@ api_version = "2026-04"
   topics = [ "app/scopes_update" ]
 
   [webhooks.privacy_compliance]
-  customer_deletion_url = "https://example.com/webhooks/customers/redact"
-  customer_data_request_url = "https://example.com/webhooks/customers/data_request"
-  shop_deletion_url = "https://example.com/webhooks/shop/redact"
+  customer_deletion_url = "https://badges-by-tag.onrender.com/webhooks/customers/redact"
+  customer_data_request_url = "https://badges-by-tag.onrender.com/webhooks/customers/data_request"
+  shop_deletion_url = "https://badges-by-tag.onrender.com/webhooks/shop/redact"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://badges-by-tag.onrender.com/auth/callback" ]
 
 [build]
 include_config_on_deploy = true
