@@ -5,7 +5,14 @@ export const action = async ({ request }) => {
   const { topic, shop } = await authenticate.webhook(request);
 
   console.log(`Received ${topic} webhook for ${shop}`);
-  await db.session.deleteMany({ where: { shop } });
+  try {
+    await db.session.deleteMany({ where: { shop } });
+  } catch (error) {
+    console.error("Failed to delete sessions after shop redact webhook", {
+      shop,
+      message: error?.message,
+    });
+  }
 
   console.log(
     JSON.stringify({
