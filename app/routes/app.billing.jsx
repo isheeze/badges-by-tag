@@ -33,6 +33,8 @@ export const loader = async ({ request }) => {
     const message = serializeBillingError(error);
     console.error("Billing request failed", {
       message,
+      name: error?.name ?? null,
+      status: error?.response?.code ?? error?.response?.status ?? null,
       errorData: error?.errorData ?? null,
     });
 
