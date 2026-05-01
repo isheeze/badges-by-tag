@@ -33,12 +33,9 @@ export async function requestProPlan({ billing }) {
     throw new Error("SHOPIFY_APP_URL is required before billing can be requested.");
   }
 
-  const returnUrl = new URL("/app/badges", process.env.SHOPIFY_APP_URL).toString();
-
   await billing.request({
     plan: PLAN_PRO,
     isTest: process.env.NODE_ENV !== "production",
-    returnUrl,
   });
 }
 

@@ -1,4 +1,5 @@
 /* eslint-disable react/prop-types */
+import { Buffer } from "node:buffer";
 import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
@@ -9,7 +10,7 @@ const PRO_TRIAL_DAYS = 7;
 export const loader = async ({ request }) => {
   const { getActivePlan, FREE_BADGE_LIMIT, BILLING_ENABLED } = await import("../lib/billing.server.js");
   const url = new URL(request.url);
-  const { billing } = await authenticate.admin(request);
+  const { billing, session } = await authenticate.admin(request);
   const plan = await getActivePlan(billing);
 
   return {
@@ -19,9 +20,24 @@ export const loader = async ({ request }) => {
       freeLimit: FREE_BADGE_LIMIT,
       trialDays: PRO_TRIAL_DAYS,
       error: url.searchParams.get("billing_error"),
+      upgradeUrl: buildEmbeddedBillingUrl(session.shop, url.searchParams),
     },
   };
 };
+
+function buildEmbeddedBillingUrl(shopDomain, currentParams) {
+  const params = new URLSearchParams(currentParams);
+  params.set("shop", shopDomain);
+  params.set("embedded", "1");
+
+  if (!params.get("host")) {
+    const shopName = shopDomain.replace(".myshopify.com", "");
+    params.set("host", Buffer.from(`admin.shopify.com/store/${shopName}`).toString("base64"));
+  }
+
+  params.delete("id_token");
+  return `/app/billing?${params.toString()}`;
+}
 
 function PlanCard({ title, price, cadence, description, features, action, highlighted, current }) {
   return (
@@ -111,7 +127,7 @@ export default function PricingPage() {
                   <button type="submit" style={styles.dangerButton}>Downgrade to Free</button>
                 </form>
               ) :
-              billing.enabled ? <a href="/app/billing" style={styles.primaryButton}>Upgrade to Pro</a> :
+              billing.enabled ? <a href={billing.upgradeUrl} style={styles.primaryButton}>Upgrade to Pro</a> :
               <s-button disabled>Available after public setup</s-button>
             }
           />
