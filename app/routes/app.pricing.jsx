@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { Buffer } from "node:buffer";
-import { useLoaderData } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 
@@ -23,12 +23,21 @@ export const loader = async ({ request }) => {
       error: url.searchParams.get("billing_error"),
       notice: url.searchParams.get("plan_notice"),
       upgradeUrl: buildEmbeddedAppUrl("/app/billing", session.shop, url.searchParams),
-      cancelUrl: buildEmbeddedAppUrl("/app/cancel-plan", session.shop, url.searchParams),
+      cancelUrl: buildEmbeddedAppUrl("/app/pricing", session.shop, url.searchParams, { billing_action: "cancel" }),
     },
   };
 };
 
-function buildEmbeddedAppUrl(pathname, shopDomain, currentParams) {
+export const action = async ({ request }) => {
+  const url = new URL(request.url);
+  if (url.searchParams.get("billing_action") !== "cancel") {
+    throw redirect(buildEmbeddedAppUrl("/app/pricing", getShopFromParams(url.searchParams), url.searchParams));
+  }
+
+  return cancelPlan(request);
+};
+
+function buildEmbeddedAppUrl(pathname, shopDomain, currentParams, extraParams = {}) {
   const params = new URLSearchParams(currentParams);
   params.set("shop", shopDomain);
   params.set("embedded", "1");
@@ -39,7 +48,89 @@ function buildEmbeddedAppUrl(pathname, shopDomain, currentParams) {
   }
 
   params.delete("id_token");
+  params.delete("billing_error");
+  params.delete("plan_notice");
+  Object.entries(extraParams).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value);
+    }
+  });
   return `${pathname}?${params.toString()}`;
+}
+
+function getShopFromParams(params) {
+  return params.get("shop") || "";
+}
+
+function billingErrorMessage(error) {
+  const errorData = error?.errorData ?? error?.response?.errors ?? null;
+  const firstMessage = Array.isArray(errorData)
+    ? errorData.map((item) => item?.message).find(Boolean)
+    : errorData?.message;
+
+  return firstMessage || error?.message || "Shopify could not cancel the active subscription.";
+}
+
+async function cancelPlan(request) {
+  const { cancelProPlan, BILLING_ENABLED, FREE_BADGE_LIMIT } = await import("../lib/billing.server.js");
+  const { getBadgeMappings, setBadgeMappings } = await import("../lib/badge-metafields.server.js");
+  const url = new URL(request.url);
+  const { admin, billing, session } = await authenticate.admin(request);
+  const pricingUrl = buildEmbeddedAppUrl("/app/pricing", session.shop, url.searchParams);
+
+  if (!BILLING_ENABLED) {
+    throw redirect(pricingUrl);
+  }
+
+  let cancelled = false;
+  try {
+    await cancelProPlan({ billing });
+    cancelled = true;
+  } catch (error) {
+    const message = billingErrorMessage(error);
+    console.error("Billing cancellation failed", {
+      message,
+      errorData: error?.errorData ?? null,
+    });
+
+    if (!isAlreadyFreeBillingError(message)) {
+      throw redirect(buildEmbeddedAppUrl("/app/pricing", session.shop, url.searchParams, { billing_error: message }));
+    }
+  }
+
+  const trimResult = await trimMappingsToFreeLimit({
+    admin,
+    freeLimit: FREE_BADGE_LIMIT,
+    getBadgeMappings,
+    setBadgeMappings,
+  });
+  const notice = trimResult.trimmed
+    ? `Downgraded to Free. Kept the first ${FREE_BADGE_LIMIT} badge mappings and removed ${trimResult.removedCount}.`
+    : cancelled
+      ? "Downgraded to Free."
+      : "Free plan is active.";
+
+  throw redirect(buildEmbeddedAppUrl("/app/pricing", session.shop, url.searchParams, { plan_notice: notice }));
+}
+
+function isAlreadyFreeBillingError(message) {
+  const normalized = message.toLowerCase();
+  return normalized.includes("not found") || normalized.includes("does not exist") || normalized.includes("no active");
+}
+
+async function trimMappingsToFreeLimit({ admin, freeLimit, getBadgeMappings, setBadgeMappings }) {
+  const mappings = await getBadgeMappings(admin);
+  if (mappings.length <= freeLimit) {
+    return { trimmed: false, removedCount: 0 };
+  }
+
+  const keptMappings = mappings.slice(0, freeLimit);
+  await setBadgeMappings(admin, keptMappings);
+
+  return {
+    trimmed: true,
+    removedCount: mappings.length - keptMappings.length,
+  };
 }
 
 function PlanCard({ title, price, cadence, description, features, action, highlighted, current }) {
@@ -77,7 +168,12 @@ function DowngradeAction({ cancelUrl, freeLimit }) {
     );
 
     if (confirmed) {
-      window.location.assign(cancelUrl);
+      const form = document.createElement("form");
+      form.method = "post";
+      form.action = cancelUrl;
+      form.style.display = "none";
+      document.body.appendChild(form);
+      form.submit();
     }
   }
 
