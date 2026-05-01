@@ -1,7 +1,7 @@
 export const PLAN_PRO = "Pro";
 export const FREE_BADGE_LIMIT = Number(process.env.FREE_BADGE_LIMIT || 3);
 export const BILLING_ENABLED = process.env.BILLING_ENABLED === "1";
-const BILLING_TEST_MODE = true;
+const BILLING_TEST_MODE = process.env.NODE_ENV !== "production";
 
 export async function getActivePlan(billing) {
   if (!BILLING_ENABLED) {
