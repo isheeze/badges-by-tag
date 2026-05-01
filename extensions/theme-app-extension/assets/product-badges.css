@@ -57,10 +57,17 @@
 .bbt-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  position: relative;
   max-width: 100%;
   min-height: 24px;
   padding: 3px 10px;
   border-radius: 999px;
+  background-color: var(--bbt-badge-bg, #16a34a);
+  background-image: var(--bbt-badge-image);
+  background-position: center;
+  background-size: cover;
+  color: var(--bbt-badge-color, #ffffff);
   font-size: var(--bbt-font-size);
   font-weight: 700;
   line-height: 16px;
@@ -70,6 +77,29 @@
   text-overflow: ellipsis;
   border: 0 solid transparent;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+  opacity: var(--bbt-opacity, 1);
+  transform: rotate(var(--bbt-rotation, 0deg));
+}
+
+.bbt-badge:not([data-template="text"]) {
+  width: var(--bbt-badge-width, 120px);
+  min-width: var(--bbt-badge-width, 120px);
+  height: var(--bbt-badge-height, 36px);
+  padding: 0;
+}
+
+.bbt-badge__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bbt-badge:not([data-template="text"]) .bbt-badge__text {
+  position: absolute;
+  left: var(--bbt-text-x, 50%);
+  top: var(--bbt-text-y, 50%);
+  width: 86%;
+  transform: translate(-50%, -50%);
+  text-align: center;
 }
 
 .bbt-badge[data-size="small"] {
@@ -116,6 +146,78 @@
 
 .bbt-badge[data-shadow="bold"] {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+}
+
+.bbt-badge[data-template="ribbon"] {
+  background-image: var(--bbt-badge-image, linear-gradient(90deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 30%, rgba(0, 0, 0, 0.16)));
+  clip-path: polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%, 6% 50%);
+}
+
+.bbt-badge[data-template="sticker"] {
+  background-image: var(--bbt-badge-image, radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.28), transparent 30%));
+}
+
+.bbt-badge[data-template="corner"] {
+  background-image: var(--bbt-badge-image, linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 42%));
+  clip-path: polygon(0 0, 100% 0, 86% 100%, 0 100%);
+}
+
+.bbt-badge[data-template="burst"] {
+  background-image: var(--bbt-badge-image, radial-gradient(circle, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 55%));
+  clip-path: polygon(50% 0%, 59% 14%, 75% 7%, 78% 24%, 95% 25%, 86% 41%, 100% 50%, 86% 59%, 95% 75%, 78% 76%, 75% 93%, 59% 86%, 50% 100%, 41% 86%, 25% 93%, 22% 76%, 5% 75%, 14% 59%, 0% 50%, 14% 41%, 5% 25%, 22% 24%, 25% 7%, 41% 14%);
+}
+
+.bbt-badge[data-template="image"] {
+  background-image: var(--bbt-badge-image, linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.18)));
+}
+
+.bbt-badge[data-image-fit="contain"] {
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.bbt-badge[data-image-fit="stretch"] {
+  background-size: 100% 100%;
+}
+
+.bbt-badge[data-font-family="serif"] {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.bbt-badge[data-font-family="mono"] {
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.bbt-badge[data-font-family="display"] {
+  font-family: "Arial Black", Impact, sans-serif;
+}
+
+.bbt-badge[data-font-weight="regular"] {
+  font-weight: 500;
+}
+
+.bbt-badge[data-font-weight="bold"] {
+  font-weight: 750;
+}
+
+.bbt-badge[data-font-weight="heavy"] {
+  font-weight: 900;
+}
+
+.bbt-badge[data-text-align="left"] .bbt-badge__text {
+  text-align: left;
+}
+
+.bbt-badge[data-text-align="right"] .bbt-badge__text {
+  text-align: right;
+}
+
+.bbt-badge[data-text-shadow="soft"] .bbt-badge__text {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.bbt-badge[data-text-shadow="bold"] .bbt-badge__text {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.38);
 }
 
 .bbt-empty {

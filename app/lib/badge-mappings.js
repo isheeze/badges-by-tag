@@ -1,17 +1,36 @@
 export const BADGE_STYLE_DEFAULTS = {
+  templateType: "text",
   shape: "pill",
   size: "medium",
   textCase: "uppercase",
   border: "none",
   shadow: "soft",
+  fontFamily: "system",
+  fontWeight: "bold",
+  imageUrl: "",
+  imageFit: "cover",
+  badgeWidth: 120,
+  badgeHeight: 36,
+  textX: 50,
+  textY: 50,
+  textAlign: "center",
+  textShadow: "soft",
+  rotation: 0,
+  opacity: 100,
 };
 
 export const BADGE_STYLE_OPTIONS = {
+  templateTypes: ["text", "ribbon", "sticker", "corner", "burst", "image"],
   shapes: ["pill", "rounded", "square"],
   sizes: ["small", "medium", "large"],
   textCases: ["uppercase", "title", "none"],
   borders: ["none", "light", "dark"],
   shadows: ["none", "soft", "bold"],
+  fontFamilies: ["system", "serif", "mono", "display"],
+  fontWeights: ["regular", "bold", "heavy"],
+  imageFits: ["cover", "contain", "stretch"],
+  textAligns: ["left", "center", "right"],
+  textShadows: ["none", "soft", "bold"],
 };
 
 export function normalizeBadgeMappings(input) {
@@ -32,6 +51,7 @@ export function normalizeBadgeMappings(input) {
     mappings.push({
       tag,
       label,
+      templateType: normalizeOption(item?.templateType, BADGE_STYLE_OPTIONS.templateTypes, BADGE_STYLE_DEFAULTS.templateType),
       bgColor,
       textColor,
       shape: normalizeOption(item?.shape, BADGE_STYLE_OPTIONS.shapes, BADGE_STYLE_DEFAULTS.shape),
@@ -39,6 +59,18 @@ export function normalizeBadgeMappings(input) {
       textCase: normalizeOption(item?.textCase, BADGE_STYLE_OPTIONS.textCases, BADGE_STYLE_DEFAULTS.textCase),
       border: normalizeOption(item?.border, BADGE_STYLE_OPTIONS.borders, BADGE_STYLE_DEFAULTS.border),
       shadow: normalizeOption(item?.shadow, BADGE_STYLE_OPTIONS.shadows, BADGE_STYLE_DEFAULTS.shadow),
+      fontFamily: normalizeOption(item?.fontFamily, BADGE_STYLE_OPTIONS.fontFamilies, BADGE_STYLE_DEFAULTS.fontFamily),
+      fontWeight: normalizeOption(item?.fontWeight, BADGE_STYLE_OPTIONS.fontWeights, BADGE_STYLE_DEFAULTS.fontWeight),
+      imageUrl: normalizeUrl(item?.imageUrl),
+      imageFit: normalizeOption(item?.imageFit, BADGE_STYLE_OPTIONS.imageFits, BADGE_STYLE_DEFAULTS.imageFit),
+      badgeWidth: normalizeNumber(item?.badgeWidth, 64, 260, BADGE_STYLE_DEFAULTS.badgeWidth),
+      badgeHeight: normalizeNumber(item?.badgeHeight, 24, 140, BADGE_STYLE_DEFAULTS.badgeHeight),
+      textX: normalizeNumber(item?.textX, 0, 100, BADGE_STYLE_DEFAULTS.textX),
+      textY: normalizeNumber(item?.textY, 0, 100, BADGE_STYLE_DEFAULTS.textY),
+      textAlign: normalizeOption(item?.textAlign, BADGE_STYLE_OPTIONS.textAligns, BADGE_STYLE_DEFAULTS.textAlign),
+      textShadow: normalizeOption(item?.textShadow, BADGE_STYLE_OPTIONS.textShadows, BADGE_STYLE_DEFAULTS.textShadow),
+      rotation: normalizeNumber(item?.rotation, -25, 25, BADGE_STYLE_DEFAULTS.rotation),
+      opacity: normalizeNumber(item?.opacity, 20, 100, BADGE_STYLE_DEFAULTS.opacity),
     });
   }
 
@@ -62,4 +94,19 @@ export function contrastColor(hex) {
 function normalizeOption(value, options, fallback) {
   const normalized = String(value ?? "").trim();
   return options.includes(normalized) ? normalized : fallback;
+}
+
+function normalizeNumber(value, min, max, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(number)));
+}
+
+function normalizeUrl(value) {
+  const url = String(value ?? "").trim();
+  if (!url) return "";
+  if (url.startsWith("https://") || url.startsWith("http://") || url.startsWith("data:image/")) {
+    return url.slice(0, 2000);
+  }
+  return "";
 }

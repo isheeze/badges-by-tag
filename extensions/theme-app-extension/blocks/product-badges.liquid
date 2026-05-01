@@ -59,6 +59,7 @@
       {%- liquid
         assign mapping_tag = mapping.tag | strip | downcase
         assign mapping_label = mapping.label | strip
+        assign template_type = mapping.templateType | default: 'text'
         assign background_color = mapping.bgColor | default: '#16a34a'
         assign text_color = mapping.textColor | default: '#ffffff'
         assign badge_shape = mapping.shape | default: 'pill'
@@ -66,6 +67,18 @@
         assign badge_text_case = mapping.textCase | default: 'uppercase'
         assign badge_border = mapping.border | default: 'none'
         assign badge_shadow = mapping.shadow | default: 'soft'
+        assign font_family = mapping.fontFamily | default: 'system'
+        assign font_weight = mapping.fontWeight | default: 'bold'
+        assign image_url = mapping.imageUrl | default: ''
+        assign image_fit = mapping.imageFit | default: 'cover'
+        assign badge_width = mapping.badgeWidth | default: 120
+        assign badge_height = mapping.badgeHeight | default: 36
+        assign text_x = mapping.textX | default: 50
+        assign text_y = mapping.textY | default: 50
+        assign text_align = mapping.textAlign | default: 'center'
+        assign text_shadow = mapping.textShadow | default: 'soft'
+        assign rotation = mapping.rotation | default: 0
+        assign opacity = mapping.opacity | default: 100
         assign tag_matched = false
       -%}
 
@@ -82,15 +95,33 @@
       {%- if tag_matched -%}
         <span
           class="bbt-badge"
+          data-template="{{ template_type }}"
           data-shape="{{ badge_shape }}"
           data-size="{{ badge_size }}"
           data-text-case="{{ badge_text_case }}"
           data-border="{{ badge_border }}"
           data-shadow="{{ badge_shadow }}"
-          style="background-color: {{ background_color }}; color: {{ text_color }};"
+          data-font-family="{{ font_family }}"
+          data-font-weight="{{ font_weight }}"
+          data-image-fit="{{ image_fit }}"
+          data-text-align="{{ text_align }}"
+          data-text-shadow="{{ text_shadow }}"
+          style="
+            --bbt-badge-bg: {{ background_color }};
+            --bbt-badge-color: {{ text_color }};
+            --bbt-badge-width: {{ badge_width }}px;
+            --bbt-badge-height: {{ badge_height }}px;
+            --bbt-text-x: {{ text_x }}%;
+            --bbt-text-y: {{ text_y }}%;
+            --bbt-rotation: {{ rotation }}deg;
+            --bbt-opacity: {{ opacity | divided_by: 100.0 }};
+            {%- if image_url != blank -%}
+              --bbt-badge-image: url('{{ image_url | escape }}');
+            {%- endif -%}
+          "
           aria-label="{{ mapping_label | escape }}"
         >
-          {{ mapping_label | escape }}
+          <span class="bbt-badge__text">{{ mapping_label | escape }}</span>
         </span>
         {%- assign rendered_count = rendered_count | plus: 1 -%}
       {%- endif -%}

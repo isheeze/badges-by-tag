@@ -5,21 +5,33 @@ import { data, useActionData, useLoaderData, useNavigation, useSubmit } from "re
 import { authenticate } from "../shopify.server";
 import { BADGE_STYLE_DEFAULTS, BADGE_STYLE_OPTIONS, contrastColor, normalizeBadgeMappings } from "../lib/badge-mappings.js";
 const DESIGN_PRESETS = [
-  { name: "Classic", bgColor: "#16a34a", textColor: "#ffffff", shape: "pill", size: "medium", textCase: "uppercase", border: "none", shadow: "soft" },
-  { name: "Sale", bgColor: "#dc2626", textColor: "#ffffff", shape: "pill", size: "large", textCase: "uppercase", border: "dark", shadow: "bold" },
-  { name: "Minimal", bgColor: "#ffffff", textColor: "#202223", shape: "rounded", size: "small", textCase: "none", border: "dark", shadow: "none" },
-  { name: "Premium", bgColor: "#111827", textColor: "#facc15", shape: "square", size: "medium", textCase: "title", border: "light", shadow: "soft" },
-  { name: "Soft", bgColor: "#fef3c7", textColor: "#92400e", shape: "rounded", size: "medium", textCase: "title", border: "dark", shadow: "none" },
+  { name: "Clean pill", templateType: "text", bgColor: "#16a34a", textColor: "#ffffff", shape: "pill", size: "medium", textCase: "uppercase", border: "none", shadow: "soft" },
+  { name: "Sale ribbon", templateType: "ribbon", bgColor: "#dc2626", textColor: "#ffffff", shape: "rounded", size: "large", textCase: "uppercase", border: "dark", shadow: "bold", badgeWidth: 150, badgeHeight: 38, rotation: -4 },
+  { name: "Premium tag", templateType: "sticker", bgColor: "#111827", textColor: "#facc15", shape: "rounded", size: "medium", textCase: "title", border: "light", shadow: "bold", badgeWidth: 118, badgeHeight: 40 },
+  { name: "Corner flag", templateType: "corner", bgColor: "#2563eb", textColor: "#ffffff", shape: "square", size: "small", textCase: "uppercase", border: "none", shadow: "soft", badgeWidth: 104, badgeHeight: 34, rotation: -8 },
+  { name: "Burst", templateType: "burst", bgColor: "#f97316", textColor: "#ffffff", shape: "pill", size: "medium", textCase: "uppercase", border: "light", shadow: "bold", badgeWidth: 92, badgeHeight: 92 },
+  { name: "Image label", templateType: "image", bgColor: "#7c3aed", textColor: "#ffffff", shape: "rounded", size: "medium", textCase: "uppercase", border: "none", shadow: "bold", badgeWidth: 150, badgeHeight: 54 },
 ];
 
 const PRESETS = [
-  { tag: "new", label: "New Arrival", ...stylePreset("Classic") },
-  { tag: "bestseller", label: "Bestseller", ...stylePreset("Premium") },
-  { tag: "sale", label: "On Sale", ...stylePreset("Sale") },
-  { tag: "eco", label: "Eco-Friendly", bgColor: "#15803d", textColor: "#ffffff", shape: "rounded", size: "medium", textCase: "title", border: "light", shadow: "soft" },
-  { tag: "limited", label: "Limited", bgColor: "#7c3aed", textColor: "#ffffff", shape: "square", size: "small", textCase: "uppercase", border: "light", shadow: "bold" },
-  { tag: "bundle", label: "Bundle Deal", bgColor: "#0369a1", textColor: "#ffffff", shape: "pill", size: "medium", textCase: "title", border: "none", shadow: "soft" },
+  { tag: "new", label: "New Arrival", category: "Product status", ...stylePreset("Clean pill") },
+  { tag: "bestseller", label: "Bestseller", category: "Sales", ...stylePreset("Premium tag") },
+  { tag: "sale", label: "On Sale", category: "Sales", ...stylePreset("Sale ribbon") },
+  { tag: "clearance", label: "Clearance", category: "Sales", ...stylePreset("Corner flag"), bgColor: "#b91c1c" },
+  { tag: "limited", label: "Limited", category: "Urgency", ...stylePreset("Burst"), bgColor: "#7c3aed" },
+  { tag: "low-stock", label: "Low Stock", category: "Urgency", ...stylePreset("Corner flag"), bgColor: "#ea580c" },
+  { tag: "back-in-stock", label: "Back In Stock", category: "Product status", ...stylePreset("Clean pill"), bgColor: "#0284c7" },
+  { tag: "preorder", label: "Preorder", category: "Product status", ...stylePreset("Premium tag"), bgColor: "#312e81", textColor: "#ffffff" },
+  { tag: "free-shipping", label: "Free Shipping", category: "Trust", ...stylePreset("Clean pill"), bgColor: "#0f766e" },
+  { tag: "organic", label: "Organic", category: "Trust", ...stylePreset("Clean pill"), bgColor: "#15803d", textCase: "title" },
+  { tag: "handmade", label: "Handmade", category: "Trust", ...stylePreset("Premium tag"), bgColor: "#78350f", textColor: "#fde68a" },
+  { tag: "premium", label: "Premium", category: "Premium", ...stylePreset("Premium tag") },
+  { tag: "bundle", label: "Bundle Deal", category: "Sales", ...stylePreset("Sale ribbon"), bgColor: "#0369a1" },
+  { tag: "holiday", label: "Holiday Pick", category: "Seasonal", ...stylePreset("Burst"), bgColor: "#be123c" },
+  { tag: "bfcm", label: "BFCM Deal", category: "Seasonal", ...stylePreset("Sale ribbon"), bgColor: "#111827", textColor: "#ffffff" },
 ];
+
+const PRESET_CATEGORIES = ["All", ...Array.from(new Set(PRESETS.map((preset) => preset.category)))];
 
 const emptyForm = {
   tag: "",
@@ -32,6 +44,7 @@ const emptyForm = {
 function stylePreset(name) {
   const preset = DESIGN_PRESETS.find((item) => item.name === name) ?? DESIGN_PRESETS[0];
   return {
+    templateType: preset.templateType,
     bgColor: preset.bgColor,
     textColor: preset.textColor,
     shape: preset.shape,
@@ -39,6 +52,9 @@ function stylePreset(name) {
     textCase: preset.textCase,
     border: preset.border,
     shadow: preset.shadow,
+    badgeWidth: preset.badgeWidth ?? BADGE_STYLE_DEFAULTS.badgeWidth,
+    badgeHeight: preset.badgeHeight ?? BADGE_STYLE_DEFAULTS.badgeHeight,
+    rotation: preset.rotation ?? BADGE_STYLE_DEFAULTS.rotation,
   };
 }
 
@@ -153,24 +169,63 @@ function normalizeTag(value) {
 }
 
 
-function BadgePreview({ label, bgColor, textColor, shape, size, textCase, border, shadow }) {
+function BadgePreview({
+  label,
+  templateType,
+  bgColor,
+  textColor,
+  shape,
+  size,
+  textCase,
+  border,
+  shadow,
+  fontFamily,
+  fontWeight,
+  imageUrl,
+  imageFit,
+  badgeWidth,
+  badgeHeight,
+  textX,
+  textY,
+  textAlign,
+  textShadow,
+  rotation,
+  opacity,
+}) {
+  const resolvedTemplate = templateType || BADGE_STYLE_DEFAULTS.templateType;
   const resolvedShape = shape || BADGE_STYLE_DEFAULTS.shape;
   const resolvedSize = size || BADGE_STYLE_DEFAULTS.size;
   const resolvedTextCase = textCase || BADGE_STYLE_DEFAULTS.textCase;
   const resolvedBorder = border || BADGE_STYLE_DEFAULTS.border;
   const resolvedShadow = shadow || BADGE_STYLE_DEFAULTS.shadow;
+  const resolvedWidth = Number(badgeWidth || BADGE_STYLE_DEFAULTS.badgeWidth);
+  const resolvedHeight = Number(badgeHeight || BADGE_STYLE_DEFAULTS.badgeHeight);
+  const resolvedTextX = Number(textX ?? BADGE_STYLE_DEFAULTS.textX);
+  const resolvedTextY = Number(textY ?? BADGE_STYLE_DEFAULTS.textY);
+  const hasImage = resolvedTemplate === "image" && imageUrl;
+  const transform = `rotate(${Number(rotation || 0)}deg)`;
 
   return (
     <span
+      data-template={resolvedTemplate}
       style={{
         ...styles.badgePreviewSize[resolvedSize],
         display: "inline-flex",
         alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        width: resolvedTemplate === "text" ? "auto" : resolvedWidth,
+        minWidth: resolvedTemplate === "text" ? undefined : resolvedWidth,
+        height: resolvedTemplate === "text" ? undefined : resolvedHeight,
         maxWidth: "100%",
         borderRadius: styles.badgePreviewShape[resolvedShape],
         background: bgColor,
+        backgroundImage: hasImage ? `url("${imageUrl}")` : styles.templateBackground[resolvedTemplate],
+        backgroundSize: hasImage ? styles.imageFit[imageFit || BADGE_STYLE_DEFAULTS.imageFit] : "cover",
+        backgroundPosition: "center",
         color: textColor,
-        fontWeight: 700,
+        fontFamily: styles.fontFamily[fontFamily || BADGE_STYLE_DEFAULTS.fontFamily],
+        fontWeight: styles.fontWeight[fontWeight || BADGE_STYLE_DEFAULTS.fontWeight],
         lineHeight: "16px",
         textTransform: styles.badgePreviewTextCase[resolvedTextCase],
         border: styles.badgePreviewBorder[resolvedBorder],
@@ -178,9 +233,26 @@ function BadgePreview({ label, bgColor, textColor, shape, size, textCase, border
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
+        opacity: Number(opacity || BADGE_STYLE_DEFAULTS.opacity) / 100,
+        transform,
+        clipPath: styles.templateClipPath[resolvedTemplate],
       }}
     >
-      {label || "Badge"}
+      <span
+        style={{
+          position: resolvedTemplate === "text" ? "static" : "absolute",
+          left: resolvedTemplate === "text" ? undefined : `${resolvedTextX}%`,
+          top: resolvedTemplate === "text" ? undefined : `${resolvedTextY}%`,
+          transform: resolvedTemplate === "text" ? undefined : "translate(-50%, -50%)",
+          width: resolvedTemplate === "text" ? undefined : "86%",
+          textAlign: textAlign || BADGE_STYLE_DEFAULTS.textAlign,
+          textShadow: styles.textShadow[textShadow || BADGE_STYLE_DEFAULTS.textShadow],
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {label || "Badge"}
+      </span>
     </span>
   );
 }
@@ -191,6 +263,7 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
   function applyDesignPreset(preset) {
     onChange({
       ...form,
+      templateType: preset.templateType,
       bgColor: preset.bgColor,
       textColor: preset.textColor,
       shape: preset.shape,
@@ -198,6 +271,9 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
       textCase: preset.textCase,
       border: preset.border,
       shadow: preset.shadow,
+      badgeWidth: preset.badgeWidth ?? form.badgeWidth,
+      badgeHeight: preset.badgeHeight ?? form.badgeHeight,
+      rotation: preset.rotation ?? form.rotation,
     });
   }
 
@@ -218,73 +294,108 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
             >
               <BadgePreview
                 label={preset.name}
-                bgColor={preset.bgColor}
-                textColor={preset.textColor}
-                shape={preset.shape}
-                size={preset.size}
-                textCase={preset.textCase}
-                border={preset.border}
-                shadow={preset.shadow}
+                {...preset}
               />
             </button>
           ))}
         </div>
       </div>
-      <div style={styles.formGrid}>
-        <label style={styles.field}>
-          <span style={styles.label}>Product tag</span>
-          <input
-            value={form.tag}
-            onChange={(event) => onChange({ ...form, tag: event.target.value })}
-            placeholder="new"
-            style={styles.input}
-          />
-        </label>
-        <label style={styles.field}>
-          <span style={styles.label}>Badge label</span>
-          <input
-            value={form.label}
-            onChange={(event) => onChange({ ...form, label: event.target.value })}
-            placeholder="New Arrival"
-            style={styles.input}
-          />
-        </label>
-        <label style={styles.field}>
-          <span style={styles.label}>Background color</span>
-          <input
-            type="color"
-            value={form.bgColor}
-            onChange={(event) => onChange({ ...form, bgColor: event.target.value })}
-            style={{ ...styles.input, padding: 4 }}
-          />
-        </label>
-        <label style={styles.field}>
-          <span style={styles.label}>Text color</span>
-          <input
-            type="color"
-            value={form.textColor || contrastColor(form.bgColor)}
-            onChange={(event) => onChange({ ...form, textColor: event.target.value })}
-            style={{ ...styles.input, padding: 4 }}
-          />
-        </label>
-        <SelectField label="Shape" value={form.shape} options={BADGE_STYLE_OPTIONS.shapes} onChange={(value) => onChange({ ...form, shape: value })} />
-        <SelectField label="Size" value={form.size} options={BADGE_STYLE_OPTIONS.sizes} onChange={(value) => onChange({ ...form, size: value })} />
-        <SelectField label="Text case" value={form.textCase} options={BADGE_STYLE_OPTIONS.textCases} onChange={(value) => onChange({ ...form, textCase: value })} />
-        <SelectField label="Border" value={form.border} options={BADGE_STYLE_OPTIONS.borders} onChange={(value) => onChange({ ...form, border: value })} />
-        <SelectField label="Shadow" value={form.shadow} options={BADGE_STYLE_OPTIONS.shadows} onChange={(value) => onChange({ ...form, shadow: value })} />
+      <div style={styles.builderGrid}>
+        <div style={styles.builderFields}>
+          <FieldGroup title="Content">
+            <div style={styles.formGrid}>
+              <label style={styles.field}>
+                <span style={styles.label}>Product tag</span>
+                <input
+                  value={form.tag}
+                  onChange={(event) => onChange({ ...form, tag: event.target.value })}
+                  placeholder="new"
+                  style={styles.input}
+                />
+              </label>
+              <label style={styles.field}>
+                <span style={styles.label}>Badge label</span>
+                <input
+                  value={form.label}
+                  onChange={(event) => onChange({ ...form, label: event.target.value })}
+                  placeholder="New Arrival"
+                  style={styles.input}
+                />
+              </label>
+              <SelectField label="Template" value={form.templateType} options={BADGE_STYLE_OPTIONS.templateTypes} onChange={(value) => onChange({ ...form, templateType: value })} />
+            </div>
+          </FieldGroup>
+          <FieldGroup title="Colors and type">
+            <div style={styles.formGrid}>
+              <label style={styles.field}>
+                <span style={styles.label}>Background color</span>
+                <input
+                  type="color"
+                  value={form.bgColor}
+                  onChange={(event) => onChange({ ...form, bgColor: event.target.value })}
+                  style={{ ...styles.input, padding: 4 }}
+                />
+              </label>
+              <label style={styles.field}>
+                <span style={styles.label}>Text color</span>
+                <input
+                  type="color"
+                  value={form.textColor || contrastColor(form.bgColor)}
+                  onChange={(event) => onChange({ ...form, textColor: event.target.value })}
+                  style={{ ...styles.input, padding: 4 }}
+                />
+              </label>
+              <SelectField label="Font" value={form.fontFamily} options={BADGE_STYLE_OPTIONS.fontFamilies} onChange={(value) => onChange({ ...form, fontFamily: value })} />
+              <SelectField label="Weight" value={form.fontWeight} options={BADGE_STYLE_OPTIONS.fontWeights} onChange={(value) => onChange({ ...form, fontWeight: value })} />
+              <SelectField label="Text case" value={form.textCase} options={BADGE_STYLE_OPTIONS.textCases} onChange={(value) => onChange({ ...form, textCase: value })} />
+              <SelectField label="Text shadow" value={form.textShadow} options={BADGE_STYLE_OPTIONS.textShadows} onChange={(value) => onChange({ ...form, textShadow: value })} />
+            </div>
+          </FieldGroup>
+          <FieldGroup title="Shape and image">
+            <div style={styles.formGrid}>
+              <SelectField label="Shape" value={form.shape} options={BADGE_STYLE_OPTIONS.shapes} onChange={(value) => onChange({ ...form, shape: value })} />
+              <SelectField label="Size" value={form.size} options={BADGE_STYLE_OPTIONS.sizes} onChange={(value) => onChange({ ...form, size: value })} />
+              <SelectField label="Border" value={form.border} options={BADGE_STYLE_OPTIONS.borders} onChange={(value) => onChange({ ...form, border: value })} />
+              <SelectField label="Shadow" value={form.shadow} options={BADGE_STYLE_OPTIONS.shadows} onChange={(value) => onChange({ ...form, shadow: value })} />
+              <label style={styles.fieldWide}>
+                <span style={styles.label}>Image background URL</span>
+                <input
+                  value={form.imageUrl}
+                  onChange={(event) => onChange({ ...form, imageUrl: event.target.value, templateType: event.target.value ? "image" : form.templateType })}
+                  placeholder="https://cdn.shopify.com/..."
+                  style={styles.input}
+                />
+              </label>
+              <SelectField label="Image fit" value={form.imageFit} options={BADGE_STYLE_OPTIONS.imageFits} onChange={(value) => onChange({ ...form, imageFit: value })} />
+            </div>
+          </FieldGroup>
+          <FieldGroup title="Size and text position">
+            <div style={styles.formGrid}>
+              <RangeField label="Width" value={form.badgeWidth} min={64} max={260} unit="px" onChange={(value) => onChange({ ...form, badgeWidth: value })} />
+              <RangeField label="Height" value={form.badgeHeight} min={24} max={140} unit="px" onChange={(value) => onChange({ ...form, badgeHeight: value })} />
+              <RangeField label="Text X" value={form.textX} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textX: value })} />
+              <RangeField label="Text Y" value={form.textY} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textY: value })} />
+              <SelectField label="Text align" value={form.textAlign} options={BADGE_STYLE_OPTIONS.textAligns} onChange={(value) => onChange({ ...form, textAlign: value })} />
+              <RangeField label="Rotation" value={form.rotation} min={-25} max={25} unit="deg" onChange={(value) => onChange({ ...form, rotation: value })} />
+              <RangeField label="Opacity" value={form.opacity} min={20} max={100} unit="%" onChange={(value) => onChange({ ...form, opacity: value })} />
+            </div>
+          </FieldGroup>
+        </div>
+        <div style={styles.previewPanel}>
+          <span style={styles.previewLabel}>Live preview</span>
+          <div style={styles.productPreview}>
+            <div style={styles.productImagePreview}>
+              <BadgePreview {...form} textColor={previewTextColor} />
+            </div>
+            <div style={styles.previewLines}>
+              <span />
+              <span />
+            </div>
+          </div>
+        </div>
       </div>
       {error ? <p style={styles.error}>{error}</p> : null}
       <div style={styles.formFooter}>
-        <BadgePreview
-          label={form.label}
-          bgColor={form.bgColor}
-          textColor={previewTextColor}
-          shape={form.shape}
-          size={form.size}
-          textCase={form.textCase}
-          border={form.border}
-          shadow={form.shadow}
-        />
         <div style={styles.actions}>
           <s-button onClick={onCancel}>Cancel</s-button>
           <s-button variant="primary" onClick={onSave}>{submitLabel}</s-button>
@@ -307,6 +418,31 @@ function SelectField({ label, value, options, onChange }) {
   );
 }
 
+function RangeField({ label, value, min, max, unit, onChange }) {
+  return (
+    <label style={styles.field}>
+      <span style={styles.label}>{label}: {value}{unit}</span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        style={styles.range}
+      />
+    </label>
+  );
+}
+
+function FieldGroup({ title, children }) {
+  return (
+    <div style={styles.fieldGroup}>
+      <h3 style={styles.smallHeading}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
 function formatOption(value) {
   return value
     .split("-")
@@ -324,6 +460,7 @@ export default function BadgesPage() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [error, setError] = useState("");
   const [dirty, setDirty] = useState(false);
+  const [presetCategory, setPresetCategory] = useState("All");
 
   useEffect(() => {
     setMappings(initialMappings ?? []);
@@ -338,6 +475,10 @@ export default function BadgesPage() {
   }, [actionData]);
 
   const existingTags = useMemo(() => new Set(mappings.map((mapping) => mapping.tag)), [mappings]);
+  const filteredPresets = useMemo(
+    () => PRESETS.filter((preset) => presetCategory === "All" || preset.category === presetCategory),
+    [presetCategory],
+  );
   const isSaving = navigation.state !== "idle" && navigation.formAction?.endsWith("/app/badges");
   const justSaved = actionData?.ok && !dirty && !isSaving;
   const overFreeLimit = billing?.enabled && !billing.hasPro && mappings.length > billing.freeLimit;
@@ -383,6 +524,7 @@ export default function BadgesPage() {
     const nextMapping = {
       tag,
       label,
+      templateType: form.templateType,
       bgColor: form.bgColor,
       textColor: form.textColor || contrastColor(form.bgColor),
       shape: form.shape,
@@ -390,6 +532,18 @@ export default function BadgesPage() {
       textCase: form.textCase,
       border: form.border,
       shadow: form.shadow,
+      fontFamily: form.fontFamily,
+      fontWeight: form.fontWeight,
+      imageUrl: form.imageUrl,
+      imageFit: form.imageFit,
+      badgeWidth: form.badgeWidth,
+      badgeHeight: form.badgeHeight,
+      textX: form.textX,
+      textY: form.textY,
+      textAlign: form.textAlign,
+      textShadow: form.textShadow,
+      rotation: form.rotation,
+      opacity: form.opacity,
     };
 
     if (editingIndex === -1) {
@@ -485,14 +639,7 @@ export default function BadgesPage() {
                     <div key={mapping.tag} style={styles.row}>
                       <div style={styles.rowContent}>
                         <BadgePreview
-                          label={mapping.label}
-                          bgColor={mapping.bgColor}
-                          textColor={mapping.textColor}
-                          shape={mapping.shape}
-                          size={mapping.size}
-                          textCase={mapping.textCase}
-                          border={mapping.border}
-                          shadow={mapping.shadow}
+                          {...mapping}
                         />
                         <code style={styles.tag}>tag: {mapping.tag}</code>
                       </div>
@@ -512,20 +659,25 @@ export default function BadgesPage() {
           <div style={styles.sideColumn}>
             <div style={styles.panel}>
               <h2 style={styles.heading}>Quick presets</h2>
+              <div style={styles.categoryTabs}>
+                {PRESET_CATEGORIES.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setPresetCategory(category)}
+                    style={presetCategory === category ? styles.categoryTabActive : styles.categoryTab}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
               <div style={styles.presetList}>
-                {PRESETS.map((preset) => {
+                {filteredPresets.map((preset) => {
                   const added = existingTags.has(preset.tag);
                   return (
                     <div key={preset.tag} style={styles.presetRow}>
                       <BadgePreview
-                        label={preset.label}
-                        bgColor={preset.bgColor}
-                        textColor={preset.textColor}
-                        shape={preset.shape}
-                        size={preset.size}
-                        textCase={preset.textCase}
-                        border={preset.border}
-                        shadow={preset.shadow}
+                        {...preset}
                       />
                       <s-button disabled={added} onClick={() => addPreset(preset)}>{added ? "Added" : "Add"}</s-button>
                     </div>
@@ -623,6 +775,16 @@ const styles = {
     padding: "6px 8px",
     cursor: "pointer",
   },
+  builderGrid: { display: "grid", gridTemplateColumns: "minmax(0, 1.4fr) minmax(220px, 0.8fr)", gap: 16, alignItems: "start" },
+  builderFields: { display: "grid", gap: 14, minWidth: 0 },
+  fieldGroup: { display: "grid", gap: 10 },
+  previewPanel: { position: "sticky", top: 12, border: "1px solid #dcdfe4", borderRadius: 8, background: "#ffffff", padding: 12 },
+  previewLabel: { color: "#616a75", fontSize: 12, fontWeight: 700 },
+  productPreview: { marginTop: 10, border: "1px solid #dcdfe4", borderRadius: 8, padding: 12, background: "#f6f6f7" },
+  productImagePreview: { position: "relative", minHeight: 190, borderRadius: 8, background: "linear-gradient(135deg, #f1f5f9, #dbeafe)", display: "grid", placeItems: "start", padding: 14, overflow: "hidden" },
+  previewLines: { display: "grid", gap: 8, marginTop: 12 },
+  range: { width: "100%" },
+  fieldWide: { display: "grid", gap: 6, fontSize: 13, fontWeight: 650, color: "#202223", gridColumn: "1 / -1" },
   formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 },
   field: { display: "grid", gap: 6, fontSize: 13, fontWeight: 650, color: "#202223" },
   label: { lineHeight: "18px" },
@@ -652,10 +814,50 @@ const styles = {
     soft: "0 1px 3px rgba(0, 0, 0, 0.16)",
     bold: "0 4px 10px rgba(0, 0, 0, 0.22)",
   },
+  templateBackground: {
+    text: undefined,
+    ribbon: "linear-gradient(90deg, rgba(255,255,255,0.16), rgba(255,255,255,0) 30%, rgba(0,0,0,0.16))",
+    sticker: "radial-gradient(circle at 18% 16%, rgba(255,255,255,0.28), transparent 30%)",
+    corner: "linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0) 42%)",
+    burst: "radial-gradient(circle, rgba(255,255,255,0.25), rgba(255,255,255,0) 55%)",
+    image: "linear-gradient(135deg, rgba(255,255,255,0.2), rgba(0,0,0,0.18))",
+  },
+  templateClipPath: {
+    text: undefined,
+    ribbon: "polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%, 6% 50%)",
+    sticker: undefined,
+    corner: "polygon(0 0, 100% 0, 86% 100%, 0 100%)",
+    burst: "polygon(50% 0%, 59% 14%, 75% 7%, 78% 24%, 95% 25%, 86% 41%, 100% 50%, 86% 59%, 95% 75%, 78% 76%, 75% 93%, 59% 86%, 50% 100%, 41% 86%, 25% 93%, 22% 76%, 5% 75%, 14% 59%, 0% 50%, 14% 41%, 5% 25%, 22% 24%, 25% 7%, 41% 14%)",
+    image: undefined,
+  },
+  imageFit: {
+    cover: "cover",
+    contain: "contain",
+    stretch: "100% 100%",
+  },
+  fontFamily: {
+    system: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    serif: "Georgia, 'Times New Roman', serif",
+    mono: "'SFMono-Regular', Consolas, monospace",
+    display: "'Arial Black', Impact, sans-serif",
+  },
+  fontWeight: {
+    regular: 500,
+    bold: 750,
+    heavy: 900,
+  },
+  textShadow: {
+    none: "none",
+    soft: "0 1px 2px rgba(0, 0, 0, 0.24)",
+    bold: "0 2px 6px rgba(0, 0, 0, 0.38)",
+  },
   error: { margin: "10px 0 0", color: "#8e1f0b", fontWeight: 650 },
   formFooter: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginTop: 14, flexWrap: "wrap" },
   presetList: { display: "grid", gap: 10, marginTop: 12 },
   presetRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 },
+  categoryTabs: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 },
+  categoryTab: { border: "1px solid #c9cccf", borderRadius: 999, background: "#ffffff", color: "#202223", padding: "5px 9px", cursor: "pointer", fontSize: 12 },
+  categoryTabActive: { border: "1px solid #008060", borderRadius: 999, background: "#edf9f0", color: "#0b3d18", padding: "5px 9px", cursor: "pointer", fontSize: 12, fontWeight: 700 },
   success: { border: "1px solid #9fd6aa", borderRadius: 8, background: "#edf9f0", color: "#0b3d18", padding: 12, fontWeight: 650 },
   info: { border: "1px solid #b4c6e7", borderRadius: 8, background: "#eef4ff", color: "#082c5f", padding: 12 },
   warning: { border: "1px solid #e5c56f", borderRadius: 8, background: "#fff5db", color: "#4f3500", padding: 12 },
