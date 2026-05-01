@@ -1,6 +1,7 @@
 export const PLAN_PRO = "Pro";
 export const FREE_BADGE_LIMIT = Number(process.env.FREE_BADGE_LIMIT || 3);
 export const BILLING_ENABLED = process.env.BILLING_ENABLED === "1";
+const BILLING_TEST_MODE = true;
 
 export async function getActivePlan(billing) {
   if (!BILLING_ENABLED) {
@@ -10,7 +11,7 @@ export async function getActivePlan(billing) {
   try {
     const result = await billing.check({
       plans: [PLAN_PRO],
-      isTest: process.env.NODE_ENV !== "production",
+      isTest: BILLING_TEST_MODE,
     });
 
     return {
@@ -35,7 +36,7 @@ export async function requestProPlan({ billing }) {
 
   await billing.request({
     plan: PLAN_PRO,
-    isTest: process.env.NODE_ENV !== "production",
+    isTest: BILLING_TEST_MODE,
   });
 }
 
@@ -53,7 +54,7 @@ export async function cancelProPlan({ billing }) {
 
   return billing.cancel({
     subscriptionId,
-    isTest: process.env.NODE_ENV !== "production",
+    isTest: BILLING_TEST_MODE,
     prorate: true,
   });
 }
