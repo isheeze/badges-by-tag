@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { Buffer } from "node:buffer";
-import { redirect, useLoaderData } from "react-router";
+import { redirect, useLoaderData, useNavigation, useSubmit } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 
@@ -84,8 +84,10 @@ async function cancelPlan(request) {
 
   let cancelled = false;
   try {
+    console.info("Cancelling Pro plan", { shop: session.shop });
     await cancelProPlan({ billing });
     cancelled = true;
+    console.info("Cancelled Pro plan", { shop: session.shop });
   } catch (error) {
     const message = billingErrorMessage(error);
     console.error("Billing cancellation failed", {
@@ -161,33 +163,37 @@ function CompareRow({ label, free, pro }) {
   );
 }
 
-function DowngradeAction({ cancelUrl, freeLimit }) {
+function DowngradeAction({ cancelUrl, freeLimit, disabled, onDowngrade }) {
   function handleDowngrade() {
     const confirmed = window.confirm(
       `Downgrading to Free keeps the first ${freeLimit} badge mappings and removes any extra mappings. Continue?`,
     );
 
     if (confirmed) {
-      const form = document.createElement("form");
-      form.method = "post";
-      form.action = cancelUrl;
-      form.style.display = "none";
-      document.body.appendChild(form);
-      form.submit();
+      onDowngrade(cancelUrl);
     }
   }
 
   return (
     <div style={styles.downgradeStack}>
       <p style={styles.warningText}>Downgrading keeps the first {freeLimit} badge mappings and removes any extra mappings.</p>
-      <button type="button" onClick={handleDowngrade} style={styles.dangerButton}>Downgrade to Free</button>
+      <button type="button" onClick={handleDowngrade} style={styles.dangerButton} disabled={disabled}>
+        {disabled ? "Downgrading" : "Downgrade to Free"}
+      </button>
     </div>
   );
 }
 
 export default function PricingPage() {
   const { billing } = useLoaderData();
+  const submit = useSubmit();
+  const navigation = useNavigation();
   const currentPlan = billing.enabled && billing.hasPro ? "Pro" : "Free";
+  const isDowngrading = navigation.state !== "idle" && navigation.formAction?.includes("billing_action=cancel");
+
+  function downgradePlan(cancelUrl) {
+    submit(new FormData(), { method: "post", action: cancelUrl });
+  }
 
   return (
     <s-page heading="Pricing">
@@ -252,7 +258,12 @@ export default function PricingPage() {
             ]}
             action={
               billing.hasPro ? (
-                <DowngradeAction cancelUrl={billing.cancelUrl} freeLimit={billing.freeLimit} />
+                <DowngradeAction
+                  cancelUrl={billing.cancelUrl}
+                  disabled={isDowngrading}
+                  freeLimit={billing.freeLimit}
+                  onDowngrade={downgradePlan}
+                />
               ) :
               billing.enabled ? <a href={billing.upgradeUrl} style={styles.primaryButton}>Upgrade to Pro</a> :
               <s-button disabled>Available after public setup</s-button>
