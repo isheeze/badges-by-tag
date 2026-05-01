@@ -24,6 +24,7 @@ export const loader = async ({ request }) => {
       enabled: BILLING_ENABLED,
       hasPro: plan.hasPro,
       freeLimit: FREE_BADGE_LIMIT,
+      limitLabel: plan.hasPro ? "Unlimited" : String(FREE_BADGE_LIMIT),
     },
   };
 };
@@ -140,7 +141,7 @@ export default function HomePage() {
               <h2 style={styles.heading}>Status</h2>
               <div style={styles.metricRow}><span>Saved badges</span><strong>{badgeCount}</strong></div>
               <div style={styles.metricRow}><span>Plan</span><strong>{planName}</strong></div>
-              <div style={styles.metricRow}><span>Free limit</span><strong>{billing.enabled ? billing.freeLimit : "Dev off"}</strong></div>
+              <div style={styles.metricRow}><span>Limit</span><strong>{billing.enabled ? billing.limitLabel : "Dev off"}</strong></div>
               <div style={styles.metricRow}><span>Live theme</span><strong>{publishedThemeName ?? "Not detected"}</strong></div>
               {!withinFreeLimit && !billing.hasPro ? <div style={styles.warning}>You are over the free limit. Remove badges or upgrade before saving changes.</div> : null}
             </div>

@@ -18,8 +18,10 @@ export const loader = async ({ request }) => {
       enabled: BILLING_ENABLED,
       hasPro: plan.hasPro,
       freeLimit: FREE_BADGE_LIMIT,
+      limitLabel: plan.hasPro ? "Unlimited" : String(FREE_BADGE_LIMIT),
       trialDays: PRO_TRIAL_DAYS,
       error: url.searchParams.get("billing_error"),
+      notice: url.searchParams.get("plan_notice"),
       upgradeUrl: buildEmbeddedAppUrl("/app/billing", session.shop, url.searchParams),
       cancelUrl: buildEmbeddedAppUrl("/app/cancel-plan", session.shop, url.searchParams),
     },
@@ -83,6 +85,8 @@ export default function PricingPage() {
           <div style={styles.currentPlanBox}>
             <span style={styles.currentPlanLabel}>Current plan</span>
             <strong>{currentPlan}</strong>
+            <span style={styles.currentPlanLabel}>Limit</span>
+            <strong>{billing.limitLabel}</strong>
           </div>
         </div>
 
@@ -90,6 +94,11 @@ export default function PricingPage() {
           <div style={styles.alert}>
             <strong>Could not update billing.</strong>
             <p style={styles.noticeText}>{billing.error}</p>
+          </div>
+        ) : null}
+        {billing.notice ? (
+          <div style={styles.success}>
+            <strong>{billing.notice}</strong>
           </div>
         ) : null}
 
@@ -195,6 +204,7 @@ const styles = {
   faqGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 },
   notice: { marginTop: 16, border: "1px solid #b4c6e7", borderRadius: 8, background: "#eef4ff", color: "#082c5f", padding: 12, lineHeight: "20px" },
   alert: { marginBottom: 16, border: "1px solid #e6a3a3", borderRadius: 8, background: "#fff1f1", color: "#5c1111", padding: 12 },
+  success: { marginBottom: 16, border: "1px solid #95c9a5", borderRadius: 8, background: "#edf9f0", color: "#0b3d18", padding: 12 },
   noticeText: { margin: "6px 0 0", lineHeight: "20px" },
 };
 
