@@ -16,10 +16,11 @@ export const loader = async () => {
 
 export const action = async ({ request }) => {
   const { cancelProPlan, BILLING_ENABLED } = await import("../lib/billing.server.js");
-  const { billing } = await authenticate.admin(request);
+  const { billing, session } = await authenticate.admin(request);
+  const pricingUrl = buildPricingUrl(request, session.shop);
 
   if (!BILLING_ENABLED) {
-    throw redirect("/app/pricing");
+    throw redirect(pricingUrl);
   }
 
   try {
@@ -31,8 +32,24 @@ export const action = async ({ request }) => {
       errorData: error?.errorData ?? null,
     });
 
-    throw redirect(`/app/pricing?billing_error=${encodeURIComponent(message)}`);
+    throw redirect(buildPricingUrl(request, session.shop, { billing_error: message }));
   }
 
-  throw redirect("/app/pricing");
+  throw redirect(pricingUrl);
 };
+
+function buildPricingUrl(request, shopDomain, extraParams = {}) {
+  const url = new URL(request.url);
+  const params = new URLSearchParams(url.searchParams);
+  params.set("shop", shopDomain);
+  params.set("embedded", "1");
+  params.delete("id_token");
+
+  Object.entries(extraParams).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value);
+    }
+  });
+
+  return `/app/pricing?${params.toString()}`;
+}

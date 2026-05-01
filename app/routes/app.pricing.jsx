@@ -20,12 +20,13 @@ export const loader = async ({ request }) => {
       freeLimit: FREE_BADGE_LIMIT,
       trialDays: PRO_TRIAL_DAYS,
       error: url.searchParams.get("billing_error"),
-      upgradeUrl: buildEmbeddedBillingUrl(session.shop, url.searchParams),
+      upgradeUrl: buildEmbeddedAppUrl("/app/billing", session.shop, url.searchParams),
+      cancelUrl: buildEmbeddedAppUrl("/app/cancel-plan", session.shop, url.searchParams),
     },
   };
 };
 
-function buildEmbeddedBillingUrl(shopDomain, currentParams) {
+function buildEmbeddedAppUrl(pathname, shopDomain, currentParams) {
   const params = new URLSearchParams(currentParams);
   params.set("shop", shopDomain);
   params.set("embedded", "1");
@@ -36,7 +37,7 @@ function buildEmbeddedBillingUrl(shopDomain, currentParams) {
   }
 
   params.delete("id_token");
-  return `/app/billing?${params.toString()}`;
+  return `${pathname}?${params.toString()}`;
 }
 
 function PlanCard({ title, price, cadence, description, features, action, highlighted, current }) {
@@ -123,7 +124,7 @@ export default function PricingPage() {
             ]}
             action={
               billing.hasPro ? (
-                <form method="post" action="/app/cancel-plan" style={styles.inlineForm}>
+                <form method="post" action={billing.cancelUrl} style={styles.inlineForm}>
                   <button type="submit" style={styles.dangerButton}>Downgrade to Free</button>
                 </form>
               ) :
