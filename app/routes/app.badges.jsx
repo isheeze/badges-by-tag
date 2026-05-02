@@ -6,9 +6,9 @@ import { authenticate } from "../shopify.server";
 import { BADGE_STYLE_DEFAULTS, BADGE_STYLE_OPTIONS, contrastColor, normalizeBadgeMappings } from "../lib/badge-mappings.js";
 const DESIGN_PRESETS = [
   { name: "Clean pill", templateType: "text", bgColor: "#16a34a", textColor: "#ffffff", shape: "pill", size: "medium", textCase: "uppercase", border: "none", shadow: "soft" },
-  { name: "Sale ribbon", templateType: "ribbon", bgColor: "#dc2626", textColor: "#ffffff", shape: "rounded", size: "large", textCase: "uppercase", border: "dark", shadow: "bold", badgeWidth: 150, badgeHeight: 38, rotation: -4 },
+  { name: "Sale ribbon", templateType: "ribbon", bgColor: "#dc2626", textColor: "#ffffff", shape: "square", size: "large", textCase: "uppercase", border: "dark", shadow: "bold", badgeWidth: 150, badgeHeight: 38, rotation: 0 },
   { name: "Premium tag", templateType: "sticker", bgColor: "#111827", textColor: "#facc15", shape: "rounded", size: "medium", textCase: "title", border: "light", shadow: "bold", badgeWidth: 118, badgeHeight: 40 },
-  { name: "Corner flag", templateType: "corner", bgColor: "#2563eb", textColor: "#ffffff", shape: "square", size: "small", textCase: "uppercase", border: "none", shadow: "soft", badgeWidth: 104, badgeHeight: 34, rotation: -8 },
+  { name: "Corner flag", templateType: "corner", bgColor: "#2563eb", textColor: "#ffffff", shape: "square", size: "small", textCase: "uppercase", border: "none", shadow: "soft", badgeWidth: 104, badgeHeight: 34, rotation: 0 },
   { name: "Burst", templateType: "burst", bgColor: "#f97316", textColor: "#ffffff", shape: "pill", size: "medium", textCase: "uppercase", border: "light", shadow: "bold", badgeWidth: 92, badgeHeight: 92 },
   { name: "Image label", templateType: "image", bgColor: "#7c3aed", textColor: "#ffffff", shape: "rounded", size: "medium", textCase: "uppercase", border: "none", shadow: "bold", badgeWidth: 150, badgeHeight: 54 },
 ];
@@ -312,7 +312,6 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
                 style={styles.input}
               />
             </label>
-            <SelectField label="Template" value={form.templateType} options={BADGE_STYLE_OPTIONS.templateTypes} onChange={(value) => onChange({ ...form, templateType: value })} />
           </div>
         </FieldGroup>
       );
@@ -416,6 +415,27 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
 
   return (
     <div style={styles.formPanel}>
+      <div style={styles.stepTabs}>
+        {studioSteps.map((step, index) => {
+          const isActive = activeStep === step.id;
+          const isComplete = index < activeStepIndex;
+          return (
+            <button
+              key={step.id}
+              type="button"
+              onClick={() => setActiveStep(step.id)}
+              style={styles.stepTab}
+            >
+              <span style={styles.stepTrackRow}>
+                <span style={index === 0 ? styles.stepConnectorHidden : isComplete || isActive ? styles.stepConnectorComplete : styles.stepConnector} />
+                <span style={isActive ? styles.stepTabNumberActive : isComplete ? styles.stepTabNumberComplete : styles.stepTabNumber}>{index + 1}</span>
+                <span style={index === studioSteps.length - 1 ? styles.stepConnectorHidden : isComplete || isActive ? styles.stepConnectorComplete : styles.stepConnector} />
+              </span>
+              <span style={isActive ? styles.stepTabLabelActive : isComplete ? styles.stepTabLabelComplete : styles.stepTabLabel}>{step.label}</span>
+            </button>
+          );
+        })}
+      </div>
       <div style={styles.studioShell}>
         <aside style={styles.stickyPreview}>
           <div style={styles.studioHeroCopy}>
@@ -453,19 +473,7 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
               <p style={styles.microCopy}>{activeStepMeta.summary}</p>
             </div>
           </div>
-          <div style={styles.stepTabs}>
-            {studioSteps.map((step, index) => (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => setActiveStep(step.id)}
-                style={activeStep === step.id ? styles.stepTabActive : styles.stepTab}
-              >
-                <span style={styles.stepTabNumber}>{index + 1}</span>
-                <span>{step.label}</span>
-              </button>
-            ))}
-          </div>
+
           <div style={styles.controlSurface}>{renderStepPanel()}</div>
           {error ? <p style={styles.error}>{error}</p> : null}
           <div style={styles.formFooter}>
@@ -870,9 +878,9 @@ const styles = {
   tag: { color: "#616a75", fontSize: 13 },
   actions: { display: "flex", gap: 8, alignItems: "center" },
   formPanel: { border: "1px solid #c9d3df", borderRadius: 8, padding: 0, marginBottom: 14, background: "#ffffff", overflow: "hidden", boxShadow: "0 18px 44px rgba(15, 23, 42, 0.12)" },
-  studioShell: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 0, alignItems: "start", background: "#f6f8fb" },
-  stickyPreview: { position: "sticky", top: 16, display: "grid", gap: 16, padding: 20, minWidth: 0, background: "linear-gradient(145deg, #111827 0%, #1f2937 44%, #0f766e 100%)", color: "#ffffff", minHeight: 620 },
-  editorRail: { display: "grid", gap: 0, minWidth: 0, background: "#ffffff" },
+  studioShell: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 0, alignItems: "stretch", background: "#f6f8fb", minHeight: 640 },
+  stickyPreview: { display: "grid", gap: 16, alignContent: "start", padding: 20, minWidth: 0, background: "linear-gradient(145deg, #111827 0%, #1f2937 44%, #0f766e 100%)", color: "#ffffff", minHeight: 640 },
+  editorRail: { display: "grid", gridTemplateRows: "auto minmax(0, 1fr) auto", gap: 0, minWidth: 0, minHeight: 640, maxHeight: 640, background: "#ffffff" },
   studioHeroCopy: { display: "grid", alignContent: "start", gap: 8, minWidth: 0 },
   eyebrow: { color: "#99f6e4", fontSize: 12, lineHeight: "16px", fontWeight: 800, textTransform: "uppercase" },
   studioTitle: { margin: 0, color: "#ffffff", fontSize: 26, lineHeight: "32px", fontWeight: 850 },
@@ -890,17 +898,26 @@ const styles = {
   stepHeader: { display: "flex", justifyContent: "space-between", gap: 14, alignItems: "start", padding: "20px 20px 14px", borderBottom: "1px solid #e5e7eb", background: "linear-gradient(180deg, #ffffff, #f8fafc)" },
   stepCount: { color: "#0f766e", fontSize: 12, fontWeight: 800, textTransform: "uppercase" },
   stepTitle: { margin: "4px 0 0", color: "#111827", fontSize: 22, lineHeight: "28px", fontWeight: 850 },
-  stepTabs: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(116px, 1fr))", gap: 8, padding: "14px 20px", background: "#f8fafc", borderBottom: "1px solid #e5e7eb" },
-  stepTab: { border: "1px solid #d7dde5", borderRadius: 8, background: "#ffffff", color: "#374151", padding: "9px 10px", display: "flex", gap: 8, alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, fontWeight: 750 },
-  stepTabActive: { border: "1px solid #0f766e", borderRadius: 8, background: "#ecfdf5", color: "#064e3b", padding: "9px 10px", display: "flex", gap: 8, alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, fontWeight: 850, boxShadow: "0 8px 18px rgba(15, 118, 110, 0.12)" },
-  stepTabNumber: { width: 20, height: 20, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "rgba(15, 118, 110, 0.12)", fontSize: 12 },
+  stepTabs: { display: "grid", gridTemplateColumns: "repeat(5, minmax(62px, 132px))", justifyContent: "center", alignItems: "start", gap: 0, padding: "18px 14px 16px", background: "#ffffff", borderBottom: "1px solid #e5e7eb" },
+  stepTab: { border: 0, background: "transparent", color: "#6b7280", padding: 0, display: "grid", gap: 8, justifyItems: "center", alignContent: "start", cursor: "pointer", minWidth: 0 },
+  stepTrackRow: { display: "grid", gridTemplateColumns: "1fr 28px 1fr", alignItems: "center", width: "100%" },
+  stepTabNumber: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#4f6df5", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "0 6px 14px rgba(79, 109, 245, 0.22)" },
+  stepTabNumberActive: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#4f6df5", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "0 8px 18px rgba(79, 109, 245, 0.28)" },
+  stepTabNumberComplete: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#10998f", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "0 8px 18px rgba(16, 153, 143, 0.22)" },
+  stepConnector: { height: 1, minWidth: 18, background: "#b8c9ff", display: "block" },
+  stepConnectorActive: { height: 1, minWidth: 18, background: "#98adff", display: "block" },
+  stepConnectorComplete: { height: 1, minWidth: 18, background: "#8fd5ce", display: "block" },
+  stepConnectorHidden: { height: 1, minWidth: 18, background: "transparent", display: "block" },
+  stepTabLabel: { color: "#64748b", fontSize: 12, lineHeight: "16px", fontWeight: 650, textAlign: "center" },
+  stepTabLabelActive: { color: "#4f6df5", fontSize: 12, lineHeight: "16px", fontWeight: 750, textAlign: "center" },
+  stepTabLabelComplete: { color: "#10998f", fontSize: 12, lineHeight: "16px", fontWeight: 750, textAlign: "center" },
   templateShelf: { display: "grid", gap: 12 },
   sectionHeader: { display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 },
   templateGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(118px, 1fr))", gap: 10 },
   templateCard: { minHeight: 82, border: "1px solid #d7dde5", borderRadius: 8, background: "#ffffff", padding: 8, display: "grid", gap: 6, justifyItems: "center", alignContent: "center", cursor: "pointer", overflow: "hidden" },
   templateCardActive: { minHeight: 82, border: "2px solid #0f766e", borderRadius: 8, background: "#ecfdf5", padding: 7, display: "grid", gap: 6, justifyItems: "center", alignContent: "center", cursor: "pointer", overflow: "hidden" },
   templateName: { color: "#374151", fontSize: 12, fontWeight: 750, lineHeight: "16px", textAlign: "center" },
-  controlSurface: { display: "grid", gap: 16, padding: 20, background: "#ffffff", minHeight: 250 },
+  controlSurface: { display: "grid", alignContent: "start", gap: 16, padding: 20, background: "#ffffff", minHeight: 0, overflowY: "auto" },
   controlGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, alignItems: "start" },
   primaryFormGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: 12 },
   fieldGroup: { display: "grid", gap: 12, border: "1px solid #e1e7ef", borderRadius: 8, background: "#fbfdff", padding: 14, boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.8)" },
@@ -974,7 +991,7 @@ const styles = {
     bold: "0 2px 6px rgba(0, 0, 0, 0.38)",
   },
   error: { margin: "0 20px 14px", color: "#8e1f0b", fontWeight: 650 },
-  formFooter: { position: "sticky", bottom: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "14px 20px", flexWrap: "wrap", background: "rgba(255, 255, 255, 0.94)", borderTop: "1px solid #e5e7eb", boxShadow: "0 -10px 22px rgba(15, 23, 42, 0.06)" },
+  formFooter: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "14px 20px", flexWrap: "wrap", background: "#ffffff", borderTop: "1px solid #e5e7eb", boxShadow: "0 -10px 22px rgba(15, 23, 42, 0.06)", zIndex: 2 },
   stepActionsLeft: { display: "flex", gap: 8, alignItems: "center" },
   presetList: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginTop: 14 },
   presetCard: { border: "1px solid #e1e7ef", borderRadius: 8, background: "#f9fafb", padding: 12, display: "grid", gap: 10, alignContent: "space-between", minHeight: 142 },
