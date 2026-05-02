@@ -85,7 +85,8 @@
   transform: rotate(var(--bbt-rotation, 0deg));
 }
 
-.bbt-badge:not([data-template="text"]) {
+.bbt-badge:not([data-template="text"]),
+.bbt-badge[data-has-image="true"] {
   padding: 0;
 }
 
@@ -94,7 +95,8 @@
   text-overflow: ellipsis;
 }
 
-.bbt-badge:not([data-template="text"]) .bbt-badge__text {
+.bbt-badge:not([data-template="text"]) .bbt-badge__text,
+.bbt-badge[data-has-image="true"] .bbt-badge__text {
   position: absolute;
   left: var(--bbt-text-x, 50%);
   top: var(--bbt-text-y, 50%);

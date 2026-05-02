@@ -109,6 +109,7 @@
           data-font-family="{{ font_family }}"
           data-font-weight="{{ font_weight }}"
           data-image-fit="{{ image_fit }}"
+          data-has-image="{% if image_url != blank %}true{% else %}false{% endif %}"
           data-text-align="{{ text_align }}"
           data-text-shadow="{{ text_shadow }}"
           style="

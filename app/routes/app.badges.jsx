@@ -209,6 +209,7 @@ function BadgePreview({
   const resolvedTextY = Number(textY ?? BADGE_STYLE_DEFAULTS.textY);
   const hasImage = Boolean(imageUrl);
   const hasTransparentImage = hasImage && isPngImageUrl(imageUrl);
+  const shouldPositionText = resolvedTemplate !== "text" || hasImage;
   const transform = `rotate(${Number(rotation || 0)}deg)`;
 
   return (
@@ -246,11 +247,11 @@ function BadgePreview({
     >
       <span
         style={{
-          position: resolvedTemplate === "text" ? "static" : "absolute",
-          left: resolvedTemplate === "text" ? undefined : `${resolvedTextX}%`,
-          top: resolvedTemplate === "text" ? undefined : `${resolvedTextY}%`,
-          transform: resolvedTemplate === "text" ? undefined : "translate(-50%, -50%)",
-          width: resolvedTemplate === "text" ? undefined : "86%",
+          position: shouldPositionText ? "absolute" : "static",
+          left: shouldPositionText ? `${resolvedTextX}%` : undefined,
+          top: shouldPositionText ? `${resolvedTextY}%` : undefined,
+          transform: shouldPositionText ? "translate(-50%, -50%)" : undefined,
+          width: shouldPositionText ? "86%" : undefined,
           textAlign: textAlign || BADGE_STYLE_DEFAULTS.textAlign,
           textShadow: styles.textShadow[textShadow || BADGE_STYLE_DEFAULTS.textShadow],
           overflow: "hidden",
