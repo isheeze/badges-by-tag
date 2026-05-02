@@ -415,6 +415,10 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
 
   return (
     <div style={styles.formPanel}>
+      <div style={styles.studioIntro}>
+        <span style={styles.eyebrow}>Badge studio</span>
+        <p style={styles.studioIntroText}>Live storefront preview stays in view while each editor tab changes the badge.</p>
+      </div>
       <div style={styles.stepTabs}>
         {studioSteps.map((step, index) => {
           const isActive = activeStep === step.id;
@@ -427,9 +431,9 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
               style={styles.stepTab}
             >
               <span style={styles.stepTrackRow}>
-                <span style={index === 0 ? styles.stepConnectorHidden : isComplete || isActive ? styles.stepConnectorComplete : styles.stepConnector} />
+                <span style={index === 0 ? styles.stepConnectorHidden : isComplete ? styles.stepConnectorComplete : isActive ? styles.stepConnectorActive : styles.stepConnector} />
                 <span style={isActive ? styles.stepTabNumberActive : isComplete ? styles.stepTabNumberComplete : styles.stepTabNumber}>{index + 1}</span>
-                <span style={index === studioSteps.length - 1 ? styles.stepConnectorHidden : isComplete || isActive ? styles.stepConnectorComplete : styles.stepConnector} />
+                <span style={index === studioSteps.length - 1 ? styles.stepConnectorHidden : isComplete ? styles.stepConnectorComplete : isActive ? styles.stepConnectorActive : styles.stepConnector} />
               </span>
               <span style={isActive ? styles.stepTabLabelActive : isComplete ? styles.stepTabLabelComplete : styles.stepTabLabel}>{step.label}</span>
             </button>
@@ -438,10 +442,8 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
       </div>
       <div style={styles.studioShell}>
         <aside style={styles.stickyPreview}>
-          <div style={styles.studioHeroCopy}>
-            <span style={styles.eyebrow}>Badge studio</span>
-            <h3 style={styles.studioTitle}>{form.label || "Design a badge"}</h3>
-            <p style={styles.studioText}>Live storefront preview stays in view while each editor tab changes the badge.</p>
+          <div style={styles.previewHeader}>
+            <span style={styles.eyebrow}>Preview</span>
           </div>
           <div style={styles.productPreview}>
             <div style={styles.productChrome}>
@@ -539,7 +541,7 @@ function formatOption(value) {
 }
 
 export default function BadgesPage() {
-  const { mappings: initialMappings, publishedThemeName, themeLinks, billing } = useLoaderData();
+  const { mappings: initialMappings, billing } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
   const submit = useSubmit();
@@ -549,6 +551,7 @@ export default function BadgesPage() {
   const [error, setError] = useState("");
   const [dirty, setDirty] = useState(false);
   const [presetCategory, setPresetCategory] = useState("All");
+  const [activeCard, setActiveCard] = useState("mappings");
   const studioRef = useRef(null);
 
   useEffect(() => {
@@ -581,6 +584,7 @@ export default function BadgesPage() {
     setForm(emptyForm);
     setEditingIndex(null);
     setError("");
+    setActiveCard("mappings");
   }
 
   function scrollToStudio() {
@@ -589,10 +593,17 @@ export default function BadgesPage() {
     }, 0);
   }
 
+  function showPresetPicker() {
+    setEditingIndex(null);
+    setError("");
+    setActiveCard("presets");
+  }
+
   function startCreate(mapping = emptyForm) {
     setForm({ ...emptyForm, ...mapping });
     setEditingIndex(-1);
     setError("");
+    setActiveCard("studio");
     scrollToStudio();
   }
 
@@ -600,6 +611,7 @@ export default function BadgesPage() {
     setForm({ ...emptyForm, ...mappings[index] });
     setEditingIndex(index);
     setError("");
+    setActiveCard("studio");
     scrollToStudio();
   }
 
@@ -652,9 +664,9 @@ export default function BadgesPage() {
     resetForm();
   }
 
-  function addPreset(preset) {
-    if (existingTags.has(preset.tag)) return;
-    updateMappings([...mappings, preset]);
+  function choosePreset(preset) {
+    if (preset.tag && existingTags.has(preset.tag)) return;
+    startCreate(preset);
   }
 
   function saveToShopify() {
@@ -668,7 +680,7 @@ export default function BadgesPage() {
       <s-button slot="primary-action" variant="primary" onClick={saveToShopify} disabled={!dirty || isSaving || overFreeLimit} {...(isSaving ? { loading: true } : {})}>
         {isSaving ? "Saving" : justSaved ? "Saved" : "Save mappings"}
       </s-button>
-      <s-button slot="secondary-actions" onClick={() => startCreate()}>
+      <s-button slot="secondary-actions" onClick={showPresetPicker}>
         Add badge
       </s-button>
 
@@ -704,7 +716,7 @@ export default function BadgesPage() {
             </div>
           ) : null}
 
-          {editingIndex !== null ? (
+          {activeCard === "studio" ? (
             <div ref={studioRef} style={styles.heroPanel}>
               <BadgeForm
                 form={form}
@@ -717,13 +729,14 @@ export default function BadgesPage() {
             </div>
           ) : null}
 
-          {mappings.length === 0 ? (
+          {activeCard === "presets" ? (
             <div style={styles.presetPanel}>
               <div style={styles.panelHeader}>
                 <div>
                   <h2 style={styles.heading}>Quick presets</h2>
-                  <p style={styles.subdued}>Add ready-made campaign badges, then customize the design in Badge Studio.</p>
+                  <p style={styles.subdued}>Choose a starting point, then customize it in Badge Studio.</p>
                 </div>
+                <s-button onClick={() => setActiveCard("mappings")}>Back to mappings</s-button>
               </div>
               <div style={styles.categoryTabs}>
                 {PRESET_CATEGORIES.map((category) => (
@@ -738,6 +751,14 @@ export default function BadgesPage() {
                 ))}
               </div>
               <div style={styles.presetList}>
+                <div style={styles.presetCard}>
+                  <BadgePreview {...emptyForm} label="Custom" tag="" />
+                  <div style={styles.presetMeta}>
+                    <strong>Custom badge</strong>
+                    <code style={styles.tag}>no tag selected</code>
+                  </div>
+                  <s-button variant="primary" onClick={() => choosePreset(emptyForm)}>Customize</s-button>
+                </div>
                 {filteredPresets.map((preset) => {
                   const added = existingTags.has(preset.tag);
                   return (
@@ -747,7 +768,7 @@ export default function BadgesPage() {
                         <strong>{preset.label}</strong>
                         <code style={styles.tag}>tag: {preset.tag}</code>
                       </div>
-                      <s-button disabled={added} onClick={() => addPreset(preset)}>{added ? "Added" : "Add"}</s-button>
+                      <s-button disabled={added} onClick={() => choosePreset(preset)}>{added ? "Added" : "Customize"}</s-button>
                     </div>
                   );
                 })}
@@ -755,65 +776,40 @@ export default function BadgesPage() {
             </div>
           ) : null}
 
-          <div style={styles.panel}>
-            <div style={styles.panelHeader}>
-              <div>
-                <h2 style={styles.heading}>Saved mappings</h2>
-                <p style={styles.subdued}>Draft changes stay here until you save mappings to Shopify.</p>
-              </div>
-            </div>
-            {mappings.length === 0 ? (
-              <div style={styles.emptyState}>
-                <h3 style={styles.emptyTitle}>No badge mappings yet</h3>
-                <p style={styles.subdued}>Add a badge manually or use a preset, then save the mappings to Shopify.</p>
-                <s-button variant="primary" onClick={() => startCreate()}>Add first badge</s-button>
-              </div>
-            ) : (
-              <div style={styles.list}>
-                {mappings.map((mapping, index) => (
-                  <div key={mapping.tag} style={styles.row}>
-                    <div style={styles.rowContent}>
-                      <BadgePreview
-                        {...mapping}
-                      />
-                      <code style={styles.tag}>tag: {mapping.tag}</code>
-                    </div>
-                    <div style={styles.actions}>
-                      <s-button onClick={() => startEdit(index)}>Edit</s-button>
-                      <s-button tone="critical" onClick={() => updateMappings(mappings.filter((_, itemIndex) => itemIndex !== index))}>
-                        Delete
-                      </s-button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div style={styles.supportGrid}>
+          {activeCard === "mappings" ? (
             <div style={styles.panel}>
-              <h2 style={styles.heading}>Plan</h2>
-              <p style={styles.subdued}>
-                {billing?.hasPro
-                  ? "Pro is active. You can save unlimited badge mappings."
-                  : `Free includes ${billing?.freeLimit ?? 3} badge mappings. Upgrade when you need more.`}
-              </p>
-              {!billing?.hasPro ? <div style={styles.linkStack}><s-button href="/app/billing">Upgrade to Pro</s-button></div> : null}
-            </div>
-            <div style={styles.panel}>
-              <h2 style={styles.heading}>Theme setup</h2>
-              <p style={styles.subdued}>
-                {publishedThemeName
-                  ? `Live theme: ${publishedThemeName}. Use these links to add the Product Badges block in the theme editor.`
-                  : "Use these links to add the Product Badges block in the theme editor."}
-              </p>
-              <div style={styles.linkStack}>
-                <s-button href={themeLinks.home} target="_top" variant="primary">Add to home page</s-button>
-                <s-button href={themeLinks.product} target="_top">Add to product page</s-button>
+              <div style={styles.panelHeader}>
+                <div>
+                  <h2 style={styles.heading}>Saved mappings</h2>
+                  <p style={styles.subdued}>Draft changes stay here until you save mappings to Shopify.</p>
+                </div>
               </div>
-              <p style={styles.subdued}>For featured collection product cards, add the block inside the product card area and keep the Product setting on the closest/autofilled product.</p>
+              {mappings.length === 0 ? (
+                <div style={styles.emptyState}>
+                  <h3 style={styles.emptyTitle}>No badge mappings yet</h3>
+                  <p style={styles.subdued}>Add a badge manually or use a preset, then save the mappings to Shopify.</p>
+                  <s-button variant="primary" onClick={showPresetPicker}>Add first badge</s-button>
+                </div>
+              ) : (
+                <div style={styles.list}>
+                  {mappings.map((mapping, index) => (
+                    <div key={mapping.tag} style={styles.row}>
+                      <div style={styles.rowContent}>
+                        <BadgePreview {...mapping} />
+                        <code style={styles.tag}>tag: {mapping.tag}</code>
+                      </div>
+                      <div style={styles.actions}>
+                        <s-button onClick={() => startEdit(index)}>Edit</s-button>
+                        <s-button tone="critical" onClick={() => updateMappings(mappings.filter((_, itemIndex) => itemIndex !== index))}>
+                          Delete
+                        </s-button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+          ) : null}
         </div>
       </s-section>
     </s-page>
@@ -832,9 +828,10 @@ const styles = {
     border: "1px solid #cfd6dd",
     borderRadius: 8,
     background: "#ffffff",
-    padding: 16,
+    padding: 0,
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
     scrollMarginTop: 18,
+    overflow: "hidden",
   },
   presetPanel: {
     border: "1px solid #dcdfe4",
@@ -877,11 +874,14 @@ const styles = {
   rowContent: { display: "flex", alignItems: "center", gap: 12, minWidth: 0, flexWrap: "wrap" },
   tag: { color: "#616a75", fontSize: 13 },
   actions: { display: "flex", gap: 8, alignItems: "center" },
-  formPanel: { border: "1px solid #c9d3df", borderRadius: 8, padding: 0, marginBottom: 14, background: "#ffffff", overflow: "hidden", boxShadow: "0 18px 44px rgba(15, 23, 42, 0.12)" },
+  formPanel: { border: 0, borderRadius: 8, padding: 0, marginBottom: 0, background: "#ffffff", overflow: "hidden", boxShadow: "none" },
   studioShell: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 0, alignItems: "stretch", background: "#f6f8fb", minHeight: 640 },
-  stickyPreview: { display: "grid", gap: 16, alignContent: "start", padding: 20, minWidth: 0, background: "linear-gradient(145deg, #111827 0%, #1f2937 44%, #0f766e 100%)", color: "#ffffff", minHeight: 640 },
+  stickyPreview: { display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", gap: 16, alignContent: "start", padding: "20px 20px 0", minWidth: 0, background: "linear-gradient(145deg, #111827 0%, #1f2937 44%, #0f766e 100%)", color: "#ffffff", minHeight: 640 },
   editorRail: { display: "grid", gridTemplateRows: "auto minmax(0, 1fr) auto", gap: 0, minWidth: 0, minHeight: 640, maxHeight: 640, background: "#ffffff" },
   studioHeroCopy: { display: "grid", alignContent: "start", gap: 8, minWidth: 0 },
+  studioIntro: { display: "grid", justifyItems: "center", gap: 6, padding: "24px 20px 18px", background: "#ffffff", textAlign: "center" },
+  studioIntroText: { margin: 0, color: "#4b5563", lineHeight: "20px", maxWidth: 620 },
+  previewHeader: { display: "flex", justifyContent: "center", alignItems: "center", minHeight: 28 },
   eyebrow: { color: "#99f6e4", fontSize: 12, lineHeight: "16px", fontWeight: 800, textTransform: "uppercase" },
   studioTitle: { margin: 0, color: "#ffffff", fontSize: 26, lineHeight: "32px", fontWeight: 850 },
   studioText: { margin: 0, color: "#d1fae5", lineHeight: "21px", maxWidth: 420 },
@@ -898,18 +898,18 @@ const styles = {
   stepHeader: { display: "flex", justifyContent: "space-between", gap: 14, alignItems: "start", padding: "20px 20px 14px", borderBottom: "1px solid #e5e7eb", background: "linear-gradient(180deg, #ffffff, #f8fafc)" },
   stepCount: { color: "#0f766e", fontSize: 12, fontWeight: 800, textTransform: "uppercase" },
   stepTitle: { margin: "4px 0 0", color: "#111827", fontSize: 22, lineHeight: "28px", fontWeight: 850 },
-  stepTabs: { display: "grid", gridTemplateColumns: "repeat(5, minmax(62px, 132px))", justifyContent: "center", alignItems: "start", gap: 0, padding: "18px 14px 16px", background: "#ffffff", borderBottom: "1px solid #e5e7eb" },
+  stepTabs: { display: "grid", gridTemplateColumns: "repeat(5, minmax(62px, 132px))", justifyContent: "center", alignItems: "start", gap: 0, padding: "12px 14px 28px", background: "#ffffff", borderBottom: "1px solid #e5e7eb" },
   stepTab: { border: 0, background: "transparent", color: "#6b7280", padding: 0, display: "grid", gap: 8, justifyItems: "center", alignContent: "start", cursor: "pointer", minWidth: 0 },
   stepTrackRow: { display: "grid", gridTemplateColumns: "1fr 28px 1fr", alignItems: "center", width: "100%" },
-  stepTabNumber: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#4f6df5", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "0 6px 14px rgba(79, 109, 245, 0.22)" },
-  stepTabNumberActive: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#4f6df5", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "0 8px 18px rgba(79, 109, 245, 0.28)" },
+  stepTabNumber: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#d1d5db", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "none" },
+  stepTabNumberActive: { width: 32, height: 32, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#3157f6", color: "#ffffff", fontSize: 13, fontWeight: 900, boxShadow: "0 10px 22px rgba(49, 87, 246, 0.36)", outline: "4px solid rgba(49, 87, 246, 0.12)" },
   stepTabNumberComplete: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#10998f", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "0 8px 18px rgba(16, 153, 143, 0.22)" },
-  stepConnector: { height: 1, minWidth: 18, background: "#b8c9ff", display: "block" },
-  stepConnectorActive: { height: 1, minWidth: 18, background: "#98adff", display: "block" },
+  stepConnector: { height: 1, minWidth: 18, background: "#d1d5db", display: "block" },
+  stepConnectorActive: { height: 2, minWidth: 18, background: "#3157f6", display: "block" },
   stepConnectorComplete: { height: 1, minWidth: 18, background: "#8fd5ce", display: "block" },
   stepConnectorHidden: { height: 1, minWidth: 18, background: "transparent", display: "block" },
-  stepTabLabel: { color: "#64748b", fontSize: 12, lineHeight: "16px", fontWeight: 650, textAlign: "center" },
-  stepTabLabelActive: { color: "#4f6df5", fontSize: 12, lineHeight: "16px", fontWeight: 750, textAlign: "center" },
+  stepTabLabel: { color: "#9ca3af", fontSize: 12, lineHeight: "16px", fontWeight: 650, textAlign: "center" },
+  stepTabLabelActive: { color: "#3157f6", fontSize: 13, lineHeight: "17px", fontWeight: 850, textAlign: "center" },
   stepTabLabelComplete: { color: "#10998f", fontSize: 12, lineHeight: "16px", fontWeight: 750, textAlign: "center" },
   templateShelf: { display: "grid", gap: 12 },
   sectionHeader: { display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 },
