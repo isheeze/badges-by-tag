@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "596a055d2bc391bf5bff8f6bda528f5c"
-name = "Badges by Tag"
+name = "UltraTalent - Badges by Tag"
 application_url = "https://badges-by-tag.onrender.com"
 embedded = true
 
