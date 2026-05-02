@@ -416,7 +416,7 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
   return (
     <div style={styles.formPanel}>
       <div style={styles.studioIntro}>
-        <span style={styles.eyebrow}>Badge studio</span>
+        <h2 style={styles.studioIntroHeading}>Badge studio</h2>
         <p style={styles.studioIntroText}>Live storefront preview stays in view while each editor tab changes the badge.</p>
       </div>
       <div style={styles.stepTabs}>
@@ -900,12 +900,12 @@ const styles = {
   stepTitle: { margin: "4px 0 0", color: "#111827", fontSize: 22, lineHeight: "28px", fontWeight: 850 },
   stepTabs: { display: "grid", gridTemplateColumns: "repeat(5, minmax(62px, 132px))", justifyContent: "center", alignItems: "start", gap: 0, padding: "12px 14px 28px", background: "#ffffff", borderBottom: "1px solid #e5e7eb" },
   stepTab: { border: 0, background: "transparent", color: "#6b7280", padding: 0, display: "grid", gap: 8, justifyItems: "center", alignContent: "start", cursor: "pointer", minWidth: 0 },
-  stepTrackRow: { display: "grid", gridTemplateColumns: "1fr 28px 1fr", alignItems: "center", width: "100%" },
-  stepTabNumber: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#d1d5db", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "none" },
-  stepTabNumberActive: { width: 32, height: 32, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#3157f6", color: "#ffffff", fontSize: 13, fontWeight: 900, boxShadow: "0 10px 22px rgba(49, 87, 246, 0.36)", outline: "4px solid rgba(49, 87, 246, 0.12)" },
-  stepTabNumberComplete: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#10998f", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "0 8px 18px rgba(16, 153, 143, 0.22)" },
+  stepTrackRow: { display: "grid", gridTemplateColumns: "1fr 34px 1fr", alignItems: "center", width: "100%" },
+  stepTabNumber: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#c7ced8", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "0 0 0 4px rgba(148, 163, 184, 0.16)" },
+  stepTabNumberActive: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#3157f6", color: "#ffffff", fontSize: 12, fontWeight: 900, boxShadow: "0 0 0 4px rgba(49, 87, 246, 0.16), 0 8px 18px rgba(49, 87, 246, 0.24)" },
+  stepTabNumberComplete: { width: 26, height: 26, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "#10998f", color: "#ffffff", fontSize: 12, fontWeight: 800, boxShadow: "0 0 0 4px rgba(16, 153, 143, 0.16), 0 8px 18px rgba(16, 153, 143, 0.16)" },
   stepConnector: { height: 1, minWidth: 18, background: "#d1d5db", display: "block" },
-  stepConnectorActive: { height: 2, minWidth: 18, background: "#3157f6", display: "block" },
+  stepConnectorActive: { height: 1, minWidth: 18, background: "#3157f6", display: "block" },
   stepConnectorComplete: { height: 1, minWidth: 18, background: "#8fd5ce", display: "block" },
   stepConnectorHidden: { height: 1, minWidth: 18, background: "transparent", display: "block" },
   stepTabLabel: { color: "#9ca3af", fontSize: 12, lineHeight: "16px", fontWeight: 650, textAlign: "center" },
