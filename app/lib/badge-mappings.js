@@ -1,3 +1,6 @@
+const MAX_REMOTE_IMAGE_URL_LENGTH = 2000;
+const MAX_DATA_IMAGE_URL_LENGTH = 120000;
+
 export const BADGE_STYLE_DEFAULTS = {
   templateType: "text",
   shape: "pill",
@@ -105,11 +108,14 @@ function normalizeNumber(value, min, max, fallback) {
 function normalizeUrl(value) {
   const url = String(value ?? "").trim();
   if (!url) return "";
-  if (url.startsWith("//")) {
-    return `https:${url}`.slice(0, 2000);
+  if (url.startsWith("data:image/")) {
+    return url.length <= MAX_DATA_IMAGE_URL_LENGTH ? url : "";
   }
-  if (url.startsWith("https://") || url.startsWith("http://") || url.startsWith("data:image/")) {
-    return url.slice(0, 2000);
+  if (url.startsWith("//")) {
+    return `https:${url}`.slice(0, MAX_REMOTE_IMAGE_URL_LENGTH);
+  }
+  if (url.startsWith("https://") || url.startsWith("http://")) {
+    return url.slice(0, MAX_REMOTE_IMAGE_URL_LENGTH);
   }
   return "";
 }
