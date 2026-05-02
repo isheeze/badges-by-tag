@@ -259,6 +259,18 @@ function BadgePreview({
 
 function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
   const previewTextColor = form.textColor || contrastColor(form.bgColor);
+  const studioSteps = [
+    { id: "mapping", label: "Mapping", summary: "Connect a product tag to the badge customers will see." },
+    { id: "template", label: "Template", summary: "Pick the badge format before fine tuning the details." },
+    { id: "style", label: "Style", summary: "Set the color, shape, border, shadow, and opacity." },
+    { id: "type", label: "Typography", summary: "Control text color, font, weight, case, alignment, and shadow." },
+    { id: "canvas", label: "Canvas", summary: "Adjust dimensions, placement, rotation, and image background." },
+  ];
+  const [activeStep, setActiveStep] = useState(studioSteps[0].id);
+  const activeStepIndex = Math.max(0, studioSteps.findIndex((step) => step.id === activeStep));
+  const activeStepMeta = studioSteps[activeStepIndex];
+  const nextStep = studioSteps[Math.min(activeStepIndex + 1, studioSteps.length - 1)]?.id;
+  const previousStep = studioSteps[Math.max(activeStepIndex - 1, 0)]?.id;
 
   function applyDesignPreset(preset) {
     onChange({
@@ -277,57 +289,10 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
     });
   }
 
-  return (
-    <div style={styles.formPanel}>
-      <div style={styles.studioHero}>
-        <div style={styles.studioHeroCopy}>
-          <span style={styles.eyebrow}>Badge studio</span>
-          <h3 style={styles.studioTitle}>{form.label || "Design a badge"}</h3>
-          <p style={styles.studioText}>Choose a template, shape the badge, then fine tune text placement for the storefront.</p>
-        </div>
-        <div style={styles.studioPreviewStage}>
-          <div style={styles.productPreview}>
-            <div style={styles.productImagePreview}>
-              <BadgePreview {...form} textColor={previewTextColor} />
-            </div>
-            <div style={styles.previewLines}>
-              <span />
-              <span />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style={styles.templateShelf}>
-        <div style={styles.sectionHeader}>
-          <div>
-            <h3 style={styles.smallHeading}>Template styles</h3>
-            <p style={styles.microCopy}>Start with a polished style and adjust it below.</p>
-          </div>
-        </div>
-        <div style={styles.templateGrid}>
-          {DESIGN_PRESETS.map((preset) => (
-            <button
-              key={preset.name}
-              type="button"
-              onClick={() => applyDesignPreset(preset)}
-              style={form.templateType === preset.templateType ? styles.templateCardActive : styles.templateCard}
-            >
-              <BadgePreview
-                label={preset.name}
-                {...preset}
-                badgeWidth={preset.templateType === "burst" ? 54 : 104}
-                badgeHeight={preset.templateType === "burst" ? 54 : 32}
-                rotation={0}
-              />
-              <span style={styles.templateName}>{preset.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={styles.controlSurface}>
-        <FieldGroup title="Content">
+  function renderStepPanel() {
+    if (activeStep === "mapping") {
+      return (
+        <FieldGroup title="Mapping">
           <div style={styles.primaryFormGrid}>
             <label style={styles.field}>
               <span style={styles.label}>Product tag</span>
@@ -350,78 +315,176 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
             <SelectField label="Template" value={form.templateType} options={BADGE_STYLE_OPTIONS.templateTypes} onChange={(value) => onChange({ ...form, templateType: value })} />
           </div>
         </FieldGroup>
+      );
+    }
 
-        <div style={styles.controlGrid}>
-          <FieldGroup title="Typography">
-            <div style={styles.formGrid}>
-              <label style={styles.field}>
-                <span style={styles.label}>Text color</span>
-                <input
-                  type="color"
-                  value={form.textColor || contrastColor(form.bgColor)}
-                  onChange={(event) => onChange({ ...form, textColor: event.target.value })}
-                  style={{ ...styles.input, padding: 4 }}
+    if (activeStep === "template") {
+      return (
+        <div style={styles.templateShelf}>
+          <div style={styles.templateGrid}>
+            {DESIGN_PRESETS.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => applyDesignPreset(preset)}
+                style={form.templateType === preset.templateType ? styles.templateCardActive : styles.templateCard}
+              >
+                <BadgePreview
+                  label={preset.name}
+                  {...preset}
+                  size="small"
+                  badgeWidth={preset.templateType === "burst" ? 42 : 82}
+                  badgeHeight={preset.templateType === "burst" ? 42 : 24}
+                  rotation={0}
                 />
-              </label>
-              <SelectField label="Font" value={form.fontFamily} options={BADGE_STYLE_OPTIONS.fontFamilies} onChange={(value) => onChange({ ...form, fontFamily: value })} />
-              <SelectField label="Weight" value={form.fontWeight} options={BADGE_STYLE_OPTIONS.fontWeights} onChange={(value) => onChange({ ...form, fontWeight: value })} />
-              <SelectField label="Text case" value={form.textCase} options={BADGE_STYLE_OPTIONS.textCases} onChange={(value) => onChange({ ...form, textCase: value })} />
-              <SelectField label="Text align" value={form.textAlign} options={BADGE_STYLE_OPTIONS.textAligns} onChange={(value) => onChange({ ...form, textAlign: value })} />
-              <SelectField label="Text shadow" value={form.textShadow} options={BADGE_STYLE_OPTIONS.textShadows} onChange={(value) => onChange({ ...form, textShadow: value })} />
-            </div>
-          </FieldGroup>
-
-          <FieldGroup title="Badge style">
-            <div style={styles.formGrid}>
-              <label style={styles.field}>
-                <span style={styles.label}>Background color</span>
-                <input
-                  type="color"
-                  value={form.bgColor}
-                  onChange={(event) => onChange({ ...form, bgColor: event.target.value })}
-                  style={{ ...styles.input, padding: 4 }}
-                />
-              </label>
-              <SelectField label="Shape" value={form.shape} options={BADGE_STYLE_OPTIONS.shapes} onChange={(value) => onChange({ ...form, shape: value })} />
-              <SelectField label="Size" value={form.size} options={BADGE_STYLE_OPTIONS.sizes} onChange={(value) => onChange({ ...form, size: value })} />
-              <SelectField label="Border" value={form.border} options={BADGE_STYLE_OPTIONS.borders} onChange={(value) => onChange({ ...form, border: value })} />
-              <SelectField label="Shadow" value={form.shadow} options={BADGE_STYLE_OPTIONS.shadows} onChange={(value) => onChange({ ...form, shadow: value })} />
-              <RangeField label="Opacity" value={form.opacity} min={20} max={100} unit="%" onChange={(value) => onChange({ ...form, opacity: value })} />
-            </div>
-          </FieldGroup>
-
-          <FieldGroup title="Canvas and image">
-            <div style={styles.formGrid}>
-              <RangeField label="Width" value={form.badgeWidth} min={64} max={260} unit="px" onChange={(value) => onChange({ ...form, badgeWidth: value })} />
-              <RangeField label="Height" value={form.badgeHeight} min={24} max={140} unit="px" onChange={(value) => onChange({ ...form, badgeHeight: value })} />
-              <RangeField label="Text X" value={form.textX} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textX: value })} />
-              <RangeField label="Text Y" value={form.textY} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textY: value })} />
-              <RangeField label="Rotation" value={form.rotation} min={-25} max={25} unit="deg" onChange={(value) => onChange({ ...form, rotation: value })} />
-              <SelectField label="Image fit" value={form.imageFit} options={BADGE_STYLE_OPTIONS.imageFits} onChange={(value) => onChange({ ...form, imageFit: value })} />
-              <label style={styles.fieldWide}>
-                <span style={styles.label}>Image background URL</span>
-                <input
-                  value={form.imageUrl}
-                  onChange={(event) => onChange({ ...form, imageUrl: event.target.value, templateType: event.target.value ? "image" : form.templateType })}
-                  placeholder="https://cdn.shopify.com/..."
-                  style={styles.input}
-                />
-              </label>
-            </div>
-          </FieldGroup>
+                <span style={styles.templateName}>{preset.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-      {error ? <p style={styles.error}>{error}</p> : null}
-      <div style={styles.formFooter}>
-        <div style={styles.actions}>
-          <s-button onClick={onCancel}>Cancel</s-button>
-          <s-button variant="primary" onClick={onSave}>{submitLabel}</s-button>
+      );
+    }
+
+    if (activeStep === "style") {
+      return (
+        <FieldGroup title="Badge style">
+          <div style={styles.formGridWide}>
+            <label style={styles.field}>
+              <span style={styles.label}>Background color</span>
+              <input
+                type="color"
+                value={form.bgColor}
+                onChange={(event) => onChange({ ...form, bgColor: event.target.value })}
+                style={{ ...styles.input, padding: 4 }}
+              />
+            </label>
+            <SelectField label="Shape" value={form.shape} options={BADGE_STYLE_OPTIONS.shapes} onChange={(value) => onChange({ ...form, shape: value })} />
+            <SelectField label="Size" value={form.size} options={BADGE_STYLE_OPTIONS.sizes} onChange={(value) => onChange({ ...form, size: value })} />
+            <SelectField label="Border" value={form.border} options={BADGE_STYLE_OPTIONS.borders} onChange={(value) => onChange({ ...form, border: value })} />
+            <SelectField label="Shadow" value={form.shadow} options={BADGE_STYLE_OPTIONS.shadows} onChange={(value) => onChange({ ...form, shadow: value })} />
+            <RangeField label="Opacity" value={form.opacity} min={20} max={100} unit="%" onChange={(value) => onChange({ ...form, opacity: value })} />
+          </div>
+        </FieldGroup>
+      );
+    }
+
+    if (activeStep === "type") {
+      return (
+        <FieldGroup title="Typography">
+          <div style={styles.formGridWide}>
+            <label style={styles.field}>
+              <span style={styles.label}>Text color</span>
+              <input
+                type="color"
+                value={form.textColor || contrastColor(form.bgColor)}
+                onChange={(event) => onChange({ ...form, textColor: event.target.value })}
+                style={{ ...styles.input, padding: 4 }}
+              />
+            </label>
+            <SelectField label="Font" value={form.fontFamily} options={BADGE_STYLE_OPTIONS.fontFamilies} onChange={(value) => onChange({ ...form, fontFamily: value })} />
+            <SelectField label="Weight" value={form.fontWeight} options={BADGE_STYLE_OPTIONS.fontWeights} onChange={(value) => onChange({ ...form, fontWeight: value })} />
+            <SelectField label="Text case" value={form.textCase} options={BADGE_STYLE_OPTIONS.textCases} onChange={(value) => onChange({ ...form, textCase: value })} />
+            <SelectField label="Text align" value={form.textAlign} options={BADGE_STYLE_OPTIONS.textAligns} onChange={(value) => onChange({ ...form, textAlign: value })} />
+            <SelectField label="Text shadow" value={form.textShadow} options={BADGE_STYLE_OPTIONS.textShadows} onChange={(value) => onChange({ ...form, textShadow: value })} />
+          </div>
+        </FieldGroup>
+      );
+    }
+
+    return (
+      <FieldGroup title="Canvas and image">
+        <div style={styles.formGridWide}>
+          <RangeField label="Width" value={form.badgeWidth} min={64} max={260} unit="px" onChange={(value) => onChange({ ...form, badgeWidth: value })} />
+          <RangeField label="Height" value={form.badgeHeight} min={24} max={140} unit="px" onChange={(value) => onChange({ ...form, badgeHeight: value })} />
+          <RangeField label="Text X" value={form.textX} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textX: value })} />
+          <RangeField label="Text Y" value={form.textY} min={0} max={100} unit="%" onChange={(value) => onChange({ ...form, textY: value })} />
+          <RangeField label="Rotation" value={form.rotation} min={-25} max={25} unit="deg" onChange={(value) => onChange({ ...form, rotation: value })} />
+          <SelectField label="Image fit" value={form.imageFit} options={BADGE_STYLE_OPTIONS.imageFits} onChange={(value) => onChange({ ...form, imageFit: value })} />
+          <label style={styles.fieldWide}>
+            <span style={styles.label}>Image background URL</span>
+            <input
+              value={form.imageUrl}
+              onChange={(event) => onChange({ ...form, imageUrl: event.target.value, templateType: event.target.value ? "image" : form.templateType })}
+              placeholder="https://cdn.shopify.com/..."
+              style={styles.input}
+            />
+          </label>
+        </div>
+      </FieldGroup>
+    );
+  }
+
+  return (
+    <div style={styles.formPanel}>
+      <div style={styles.studioShell}>
+        <aside style={styles.stickyPreview}>
+          <div style={styles.studioHeroCopy}>
+            <span style={styles.eyebrow}>Badge studio</span>
+            <h3 style={styles.studioTitle}>{form.label || "Design a badge"}</h3>
+            <p style={styles.studioText}>Live storefront preview stays in view while each editor tab changes the badge.</p>
+          </div>
+          <div style={styles.productPreview}>
+            <div style={styles.productChrome}>
+              <span style={styles.productChromeDot} />
+              <span style={styles.productChromeDot} />
+              <span style={styles.productChromeDot} />
+            </div>
+            <div style={styles.productImagePreview}>
+              <div style={styles.previewGridGlow} />
+              <BadgePreview {...form} textColor={previewTextColor} />
+            </div>
+            <div style={styles.previewLines}>
+              <span style={styles.previewLineWide} />
+              <span style={styles.previewLineShort} />
+              <span style={styles.previewLineTiny} />
+            </div>
+            <div style={styles.previewFooter}>
+              <span>{form.tag ? `tag: ${normalizeTag(form.tag)}` : "tag preview"}</span>
+              <strong>{formatOption(form.templateType || "text")}</strong>
+            </div>
+          </div>
+        </aside>
+
+        <div style={styles.editorRail}>
+          <div style={styles.stepHeader}>
+            <div>
+              <span style={styles.stepCount}>Step {activeStepIndex + 1} of {studioSteps.length}</span>
+              <h3 style={styles.stepTitle}>{activeStepMeta.label}</h3>
+              <p style={styles.microCopy}>{activeStepMeta.summary}</p>
+            </div>
+          </div>
+          <div style={styles.stepTabs}>
+            {studioSteps.map((step, index) => (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => setActiveStep(step.id)}
+                style={activeStep === step.id ? styles.stepTabActive : styles.stepTab}
+              >
+                <span style={styles.stepTabNumber}>{index + 1}</span>
+                <span>{step.label}</span>
+              </button>
+            ))}
+          </div>
+          <div style={styles.controlSurface}>{renderStepPanel()}</div>
+          {error ? <p style={styles.error}>{error}</p> : null}
+          <div style={styles.formFooter}>
+            <div style={styles.stepActionsLeft}>
+              <s-button onClick={onCancel}>Cancel</s-button>
+              <s-button onClick={() => setActiveStep(previousStep)} disabled={activeStepIndex === 0}>Back</s-button>
+            </div>
+            <div style={styles.actions}>
+              {activeStepIndex < studioSteps.length - 1 ? (
+                <s-button variant="primary" onClick={() => setActiveStep(nextStep)}>Next</s-button>
+              ) : null}
+              <s-button variant={activeStepIndex === studioSteps.length - 1 ? "primary" : undefined} onClick={onSave}>{submitLabel}</s-button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
 function SelectField({ label, value, options, onChange }) {
   return (
     <label style={styles.field}>
@@ -806,32 +869,48 @@ const styles = {
   rowContent: { display: "flex", alignItems: "center", gap: 12, minWidth: 0, flexWrap: "wrap" },
   tag: { color: "#616a75", fontSize: 13 },
   actions: { display: "flex", gap: 8, alignItems: "center" },
-  formPanel: { border: "1px solid #cfd6dd", borderRadius: 8, padding: 0, marginBottom: 14, background: "#ffffff", overflow: "hidden", boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)" },
-  studioHero: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: 20, alignItems: "stretch", padding: 20, background: "linear-gradient(135deg, #f8fafc, #eef4ff)" },
-  studioHeroCopy: { display: "grid", alignContent: "center", gap: 8, minWidth: 0 },
-  eyebrow: { color: "#0b5cab", fontSize: 12, lineHeight: "16px", fontWeight: 800, textTransform: "uppercase" },
-  studioTitle: { margin: 0, color: "#111827", fontSize: 24, lineHeight: "30px", fontWeight: 800 },
-  studioText: { margin: 0, color: "#4b5563", lineHeight: "21px", maxWidth: 420 },
-  studioPreviewStage: { minWidth: 0 },
-  productPreview: { border: "1px solid #d8dee8", borderRadius: 8, padding: 14, background: "#ffffff", boxShadow: "0 10px 28px rgba(15, 23, 42, 0.10)" },
-  productImagePreview: { position: "relative", minHeight: 250, borderRadius: 8, background: "linear-gradient(135deg, #f8fafc 0%, #e0e7ff 46%, #dbeafe 100%)", display: "grid", placeItems: "start", padding: 18, overflow: "hidden" },
+  formPanel: { border: "1px solid #c9d3df", borderRadius: 8, padding: 0, marginBottom: 14, background: "#ffffff", overflow: "hidden", boxShadow: "0 18px 44px rgba(15, 23, 42, 0.12)" },
+  studioShell: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 0, alignItems: "start", background: "#f6f8fb" },
+  stickyPreview: { position: "sticky", top: 16, display: "grid", gap: 16, padding: 20, minWidth: 0, background: "linear-gradient(145deg, #111827 0%, #1f2937 44%, #0f766e 100%)", color: "#ffffff", minHeight: 620 },
+  editorRail: { display: "grid", gap: 0, minWidth: 0, background: "#ffffff" },
+  studioHeroCopy: { display: "grid", alignContent: "start", gap: 8, minWidth: 0 },
+  eyebrow: { color: "#99f6e4", fontSize: 12, lineHeight: "16px", fontWeight: 800, textTransform: "uppercase" },
+  studioTitle: { margin: 0, color: "#ffffff", fontSize: 26, lineHeight: "32px", fontWeight: 850 },
+  studioText: { margin: 0, color: "#d1fae5", lineHeight: "21px", maxWidth: 420 },
+  productPreview: { border: "1px solid rgba(255, 255, 255, 0.22)", borderRadius: 8, padding: 12, background: "rgba(255, 255, 255, 0.96)", boxShadow: "0 24px 52px rgba(0, 0, 0, 0.26)", color: "#202223" },
+  productChrome: { display: "flex", gap: 5, padding: "0 0 10px" },
+  productChromeDot: { width: 8, height: 8, borderRadius: 999, background: "#cfd6dd", display: "block" },
+  productImagePreview: { position: "relative", minHeight: 320, borderRadius: 8, background: "linear-gradient(135deg, #f8fafc 0%, #e0f2fe 48%, #ccfbf1 100%)", display: "grid", placeItems: "center", padding: 20, overflow: "hidden" },
+  previewGridGlow: { position: "absolute", inset: 0, background: "linear-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px)", backgroundSize: "34px 34px" },
   previewLines: { display: "grid", gap: 8, marginTop: 12 },
-  templateShelf: { padding: "18px 20px", borderTop: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb", background: "#ffffff" },
+  previewLineWide: { display: "block", height: 10, width: "76%", borderRadius: 999, background: "#dce3ea" },
+  previewLineShort: { display: "block", height: 10, width: "54%", borderRadius: 999, background: "#eef2f6" },
+  previewLineTiny: { display: "block", height: 10, width: "32%", borderRadius: 999, background: "#f3f5f7" },
+  previewFooter: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginTop: 12, color: "#4b5563", fontSize: 12, textTransform: "uppercase" },
+  stepHeader: { display: "flex", justifyContent: "space-between", gap: 14, alignItems: "start", padding: "20px 20px 14px", borderBottom: "1px solid #e5e7eb", background: "linear-gradient(180deg, #ffffff, #f8fafc)" },
+  stepCount: { color: "#0f766e", fontSize: 12, fontWeight: 800, textTransform: "uppercase" },
+  stepTitle: { margin: "4px 0 0", color: "#111827", fontSize: 22, lineHeight: "28px", fontWeight: 850 },
+  stepTabs: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(116px, 1fr))", gap: 8, padding: "14px 20px", background: "#f8fafc", borderBottom: "1px solid #e5e7eb" },
+  stepTab: { border: "1px solid #d7dde5", borderRadius: 8, background: "#ffffff", color: "#374151", padding: "9px 10px", display: "flex", gap: 8, alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, fontWeight: 750 },
+  stepTabActive: { border: "1px solid #0f766e", borderRadius: 8, background: "#ecfdf5", color: "#064e3b", padding: "9px 10px", display: "flex", gap: 8, alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, fontWeight: 850, boxShadow: "0 8px 18px rgba(15, 118, 110, 0.12)" },
+  stepTabNumber: { width: 20, height: 20, borderRadius: 999, display: "inline-grid", placeItems: "center", background: "rgba(15, 118, 110, 0.12)", fontSize: 12 },
+  templateShelf: { display: "grid", gap: 12 },
   sectionHeader: { display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 },
-  templateGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))", gap: 8 },
-  templateCard: { minHeight: 78, border: "1px solid #d7dde5", borderRadius: 8, background: "#ffffff", padding: 8, display: "grid", gap: 6, justifyItems: "center", alignContent: "center", cursor: "pointer", overflow: "hidden" },
-  templateCardActive: { minHeight: 78, border: "2px solid #008060", borderRadius: 8, background: "#f0fdf4", padding: 7, display: "grid", gap: 6, justifyItems: "center", alignContent: "center", cursor: "pointer", overflow: "hidden" },
-  templateName: { color: "#374151", fontSize: 12, fontWeight: 750 },
-  controlSurface: { display: "grid", gap: 18, padding: 20, background: "#f9fafb" },
-  controlGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, alignItems: "start" },
-  primaryFormGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12 },
-  fieldGroup: { display: "grid", gap: 12, border: "1px solid #e1e7ef", borderRadius: 8, background: "#ffffff", padding: 14 },
-  range: { width: "100%" },
+  templateGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(118px, 1fr))", gap: 10 },
+  templateCard: { minHeight: 82, border: "1px solid #d7dde5", borderRadius: 8, background: "#ffffff", padding: 8, display: "grid", gap: 6, justifyItems: "center", alignContent: "center", cursor: "pointer", overflow: "hidden" },
+  templateCardActive: { minHeight: 82, border: "2px solid #0f766e", borderRadius: 8, background: "#ecfdf5", padding: 7, display: "grid", gap: 6, justifyItems: "center", alignContent: "center", cursor: "pointer", overflow: "hidden" },
+  templateName: { color: "#374151", fontSize: 12, fontWeight: 750, lineHeight: "16px", textAlign: "center" },
+  controlSurface: { display: "grid", gap: 16, padding: 20, background: "#ffffff", minHeight: 250 },
+  controlGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, alignItems: "start" },
+  primaryFormGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: 12 },
+  fieldGroup: { display: "grid", gap: 12, border: "1px solid #e1e7ef", borderRadius: 8, background: "#fbfdff", padding: 14, boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.8)" },
+  range: { width: "100%", accentColor: "#0f766e" },
   fieldWide: { display: "grid", gap: 6, fontSize: 13, fontWeight: 650, color: "#202223", gridColumn: "1 / -1" },
-  formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 },
+  formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 },
+  formGridWide: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 },
   field: { display: "grid", gap: 6, fontSize: 13, fontWeight: 650, color: "#202223" },
   label: { lineHeight: "18px" },
-  input: { width: "100%", minHeight: 38, border: "1px solid #c9cccf", borderRadius: 6, padding: "7px 10px", boxSizing: "border-box" },
+  input: { width: "100%", minHeight: 38, border: "1px solid #c9cccf", borderRadius: 6, padding: "7px 10px", boxSizing: "border-box", background: "#ffffff" },
   badgePreviewSize: {
     small: { minHeight: 20, padding: "2px 8px", fontSize: 11 },
     medium: { minHeight: 24, padding: "3px 10px", fontSize: 12 },
@@ -894,8 +973,9 @@ const styles = {
     soft: "0 1px 2px rgba(0, 0, 0, 0.24)",
     bold: "0 2px 6px rgba(0, 0, 0, 0.38)",
   },
-  error: { margin: "10px 0 0", color: "#8e1f0b", fontWeight: 650 },
-  formFooter: { display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, padding: "0 20px 20px", flexWrap: "wrap", background: "#f9fafb" },
+  error: { margin: "0 20px 14px", color: "#8e1f0b", fontWeight: 650 },
+  formFooter: { position: "sticky", bottom: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "14px 20px", flexWrap: "wrap", background: "rgba(255, 255, 255, 0.94)", borderTop: "1px solid #e5e7eb", boxShadow: "0 -10px 22px rgba(15, 23, 42, 0.06)" },
+  stepActionsLeft: { display: "flex", gap: 8, alignItems: "center" },
   presetList: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginTop: 14 },
   presetCard: { border: "1px solid #e1e7ef", borderRadius: 8, background: "#f9fafb", padding: 12, display: "grid", gap: 10, alignContent: "space-between", minHeight: 142 },
   presetMeta: { display: "grid", gap: 4, color: "#202223" },
