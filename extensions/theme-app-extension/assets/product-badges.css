@@ -59,7 +59,11 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  box-sizing: border-box;
+  width: var(--bbt-badge-width, auto);
+  min-width: var(--bbt-badge-width, 0);
   max-width: 100%;
+  height: var(--bbt-badge-height, auto);
   min-height: 24px;
   padding: 3px 10px;
   border-radius: 999px;
@@ -82,9 +86,6 @@
 }
 
 .bbt-badge:not([data-template="text"]) {
-  width: var(--bbt-badge-width, 120px);
-  min-width: var(--bbt-badge-width, 120px);
-  height: var(--bbt-badge-height, 36px);
   padding: 0;
 }
 

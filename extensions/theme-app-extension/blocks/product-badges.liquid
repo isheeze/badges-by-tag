@@ -71,6 +71,11 @@
         assign font_weight = mapping.fontWeight | default: 'bold'
         assign image_url = mapping.imageUrl | default: ''
         assign image_fit = mapping.imageFit | default: 'cover'
+        assign image_url_downcase = image_url | downcase
+        assign has_transparent_image = false
+        if image_url_downcase contains 'data:image/png' or image_url_downcase contains '.png'
+          assign has_transparent_image = true
+        endif
         assign badge_width = mapping.badgeWidth | default: 120
         assign badge_height = mapping.badgeHeight | default: 36
         assign text_x = mapping.textX | default: 50
@@ -107,7 +112,7 @@
           data-text-align="{{ text_align }}"
           data-text-shadow="{{ text_shadow }}"
           style="
-            --bbt-badge-bg: {{ background_color }};
+            --bbt-badge-bg: {%- if has_transparent_image -%} transparent {%- else -%} {{ background_color }} {%- endif -%};
             --bbt-badge-color: {{ text_color }};
             --bbt-badge-width: {{ badge_width }}px;
             --bbt-badge-height: {{ badge_height }}px;

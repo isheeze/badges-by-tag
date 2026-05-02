@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { data, useActionData, useLoaderData, useNavigation, useSubmit } from "react-router";
 import { authenticate } from "../shopify.server";
-import { BADGE_STYLE_DEFAULTS, BADGE_STYLE_OPTIONS, contrastColor, normalizeBadgeMappings } from "../lib/badge-mappings.js";
+import { BADGE_STYLE_DEFAULTS, BADGE_STYLE_OPTIONS, MAX_IMAGE_URL_LENGTH, contrastColor, normalizeBadgeMappings } from "../lib/badge-mappings.js";
 const DESIGN_PRESETS = [
   { name: "Clean pill", templateType: "text", bgColor: "#16a34a", textColor: "#ffffff", shape: "pill", size: "medium", textCase: "uppercase", border: "none", shadow: "soft" },
   { name: "Sale ribbon", templateType: "ribbon", bgColor: "#dc2626", textColor: "#ffffff", shape: "square", size: "large", textCase: "uppercase", border: "dark", shadow: "bold", badgeWidth: 150, badgeHeight: 38, rotation: 0 },
@@ -164,6 +164,11 @@ function buildThemeEditorLinks(shopDomain, apiKey) {
     }).toString()}`,
   };
 }
+function isPngImageUrl(value) {
+  const imageUrl = String(value || "").trim().toLowerCase();
+  return imageUrl.startsWith("data:image/png") || imageUrl.includes(".png");
+}
+
 function normalizeTag(value) {
   return value.trim().toLowerCase().replace(/\s+/g, "-");
 }
@@ -203,6 +208,7 @@ function BadgePreview({
   const resolvedTextX = Number(textX ?? BADGE_STYLE_DEFAULTS.textX);
   const resolvedTextY = Number(textY ?? BADGE_STYLE_DEFAULTS.textY);
   const hasImage = Boolean(imageUrl);
+  const hasTransparentImage = hasImage && isPngImageUrl(imageUrl);
   const transform = `rotate(${Number(rotation || 0)}deg)`;
 
   return (
@@ -214,12 +220,12 @@ function BadgePreview({
         alignItems: "center",
         justifyContent: "center",
         position: "relative",
-        width: resolvedTemplate === "text" ? "auto" : resolvedWidth,
-        minWidth: resolvedTemplate === "text" ? undefined : resolvedWidth,
-        height: resolvedTemplate === "text" ? undefined : resolvedHeight,
+        width: resolvedWidth,
+        minWidth: resolvedWidth,
+        height: resolvedHeight,
         maxWidth: "100%",
         borderRadius: styles.badgePreviewShape[resolvedShape],
-        background: bgColor,
+        background: hasTransparentImage ? "transparent" : bgColor,
         backgroundImage: hasImage ? `url("${imageUrl}")` : styles.templateBackground[resolvedTemplate],
         backgroundSize: hasImage ? styles.imageFit[imageFit || BADGE_STYLE_DEFAULTS.imageFit] : "cover",
         backgroundPosition: "center",
@@ -259,6 +265,8 @@ function BadgePreview({
 
 function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel, isSaving }) {
   const previewTextColor = form.textColor || contrastColor(form.bgColor);
+  const imageUrlLength = String(form.imageUrl || "").length;
+  const imageUrlTooLong = imageUrlLength > MAX_IMAGE_URL_LENGTH;
   const studioSteps = [
     { id: "mapping", label: "Mapping", summary: "Connect a product tag to the badge customers will see." },
     { id: "template", label: "Template", summary: "Pick the badge format before fine tuning the details." },
@@ -405,8 +413,10 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel, isSav
               value={form.imageUrl}
               onChange={(event) => onChange({ ...form, imageUrl: event.target.value })}
               placeholder="https://cdn.shopify.com/..."
-              style={styles.input}
+              style={imageUrlTooLong ? { ...styles.input, borderColor: "#d72c0d" } : styles.input}
             />
+            <span style={imageUrlTooLong ? styles.fieldWarning : styles.fieldHint}>{imageUrlLength}/{MAX_IMAGE_URL_LENGTH} characters</span>
+            {imageUrlTooLong ? <span style={styles.fieldWarning}>Image URL is too long. Use a hosted Shopify CDN image URL under 2000 characters.</span> : null}
           </label>
         </div>
       </FieldGroup>
@@ -621,6 +631,11 @@ export default function BadgesPage() {
 
     if (!tag || !label) {
       setError("Tag and label are required.");
+      return;
+    }
+
+    if (String(form.imageUrl || "").length > MAX_IMAGE_URL_LENGTH) {
+      setError(`Image background URL must be ${MAX_IMAGE_URL_LENGTH} characters or less.`);
       return;
     }
 
@@ -937,6 +952,8 @@ const styles = {
   field: { display: "grid", gap: 6, fontSize: 13, fontWeight: 650, color: "#202223" },
   label: { lineHeight: "18px" },
   input: { width: "100%", minHeight: 38, border: "1px solid #c9cccf", borderRadius: 6, padding: "7px 10px", boxSizing: "border-box", background: "#ffffff" },
+  fieldHint: { color: "#6b7280", fontSize: 12, lineHeight: "16px" },
+  fieldWarning: { color: "#d72c0d", fontSize: 12, lineHeight: "16px", fontWeight: 650 },
   badgePreviewSize: {
     small: { minHeight: 20, padding: "2px 8px", fontSize: 11 },
     medium: { minHeight: 24, padding: "3px 10px", fontSize: 12 },
