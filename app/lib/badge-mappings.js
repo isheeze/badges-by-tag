@@ -105,6 +105,9 @@ function normalizeNumber(value, min, max, fallback) {
 function normalizeUrl(value) {
   const url = String(value ?? "").trim();
   if (!url) return "";
+  if (url.startsWith("//")) {
+    return `https:${url}`.slice(0, 2000);
+  }
   if (url.startsWith("https://") || url.startsWith("http://") || url.startsWith("data:image/")) {
     return url.slice(0, 2000);
   }

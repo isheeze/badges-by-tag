@@ -202,7 +202,7 @@ function BadgePreview({
   const resolvedHeight = Number(badgeHeight || BADGE_STYLE_DEFAULTS.badgeHeight);
   const resolvedTextX = Number(textX ?? BADGE_STYLE_DEFAULTS.textX);
   const resolvedTextY = Number(textY ?? BADGE_STYLE_DEFAULTS.textY);
-  const hasImage = resolvedTemplate === "image" && imageUrl;
+  const hasImage = Boolean(imageUrl);
   const transform = `rotate(${Number(rotation || 0)}deg)`;
 
   return (
@@ -403,7 +403,7 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
             <span style={styles.label}>Image background URL</span>
             <input
               value={form.imageUrl}
-              onChange={(event) => onChange({ ...form, imageUrl: event.target.value, templateType: event.target.value ? "image" : form.templateType })}
+              onChange={(event) => onChange({ ...form, imageUrl: event.target.value })}
               placeholder="https://cdn.shopify.com/..."
               style={styles.input}
             />
