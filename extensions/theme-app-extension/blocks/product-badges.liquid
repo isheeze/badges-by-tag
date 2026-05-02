@@ -49,6 +49,34 @@
     data-overlay-offset="{{ overlay_offset }}"
     data-font-size="{{ font_size }}"
     data-hide-mobile="{{ hide_on_mobile }}"
+    style="
+      --bbt-font-size: {{ font_size }}px;
+      --bbt-overlay-offset: {{ overlay_offset }}px;
+      display: flex;
+      {%- if layout == 'row' -%}
+        flex-wrap: nowrap;
+        overflow: hidden;
+      {%- elsif layout == 'column' -%}
+        flex-direction: column;
+        flex-wrap: wrap;
+      {%- else -%}
+        flex-wrap: wrap;
+      {%- endif -%}
+      gap: {%- if layout == 'compact' -%} 4px {%- else -%} 6px {%- endif -%};
+      align-items: {%- if layout == 'column' and alignment == 'center' -%} center {%- elsif layout == 'column' and alignment == 'right' -%} flex-end {%- else -%} center {%- endif -%};
+      justify-content: {%- if alignment == 'center' -%} center {%- elsif alignment == 'right' or position == 'top-right' -%} flex-end {%- else -%} flex-start {%- endif -%};
+      pointer-events: none;
+      z-index: 20;
+      {%- if position == 'top-left' -%}
+        position: absolute;
+        top: {{ overlay_offset }}px;
+        left: {{ overlay_offset }}px;
+      {%- elsif position == 'top-right' -%}
+        position: absolute;
+        top: {{ overlay_offset }}px;
+        right: {{ overlay_offset }}px;
+      {%- endif -%}
+    "
     {{ block.shopify_attributes }}
   >
     {%- for mapping in mappings -%}
@@ -84,6 +112,78 @@
         assign text_shadow = mapping.textShadow | default: 'soft'
         assign rotation = mapping.rotation | default: 0
         assign opacity = mapping.opacity | default: 100
+        assign badge_radius = '999px'
+        if badge_shape == 'rounded'
+          assign badge_radius = '8px'
+        elsif badge_shape == 'square'
+          assign badge_radius = '2px'
+        endif
+        assign badge_padding = '3px 10px'
+        assign badge_min_height = 24
+        if badge_size == 'small'
+          assign badge_padding = '2px 8px'
+          assign badge_min_height = 20
+        elsif badge_size == 'large'
+          assign badge_padding = '5px 12px'
+          assign badge_min_height = 30
+        endif
+        if template_type != 'text' or image_url != blank
+          assign badge_padding = '0'
+        endif
+        assign badge_text_transform = 'uppercase'
+        if badge_text_case == 'title'
+          assign badge_text_transform = 'capitalize'
+        elsif badge_text_case == 'none'
+          assign badge_text_transform = 'none'
+        endif
+        assign badge_border_value = '0 solid transparent'
+        if badge_border == 'light'
+          assign badge_border_value = '1px solid rgba(255, 255, 255, 0.65)'
+        elsif badge_border == 'dark'
+          assign badge_border_value = '1px solid rgba(0, 0, 0, 0.28)'
+        endif
+        assign badge_shadow_value = '0 1px 3px rgba(0, 0, 0, 0.16)'
+        if badge_shadow == 'none'
+          assign badge_shadow_value = 'none'
+        elsif badge_shadow == 'bold'
+          assign badge_shadow_value = '0 4px 10px rgba(0, 0, 0, 0.22)'
+        endif
+        assign badge_font_family_value = 'inherit'
+        if font_family == 'serif'
+          assign badge_font_family_value = 'Georgia, "Times New Roman", serif'
+        elsif font_family == 'mono'
+          assign badge_font_family_value = '"SFMono-Regular", Consolas, monospace'
+        elsif font_family == 'display'
+          assign badge_font_family_value = '"Arial Black", Impact, sans-serif'
+        endif
+        assign badge_font_weight_value = 750
+        if font_weight == 'regular'
+          assign badge_font_weight_value = 500
+        elsif font_weight == 'heavy'
+          assign badge_font_weight_value = 900
+        endif
+        assign badge_background_size = 'cover'
+        assign badge_background_repeat = 'repeat'
+        if image_fit == 'contain'
+          assign badge_background_size = 'contain'
+          assign badge_background_repeat = 'no-repeat'
+        elsif image_fit == 'stretch'
+          assign badge_background_size = '100% 100%'
+        endif
+        assign badge_clip_path = ''
+        if template_type == 'ribbon'
+          assign badge_clip_path = 'polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%, 6% 50%)'
+        elsif template_type == 'corner'
+          assign badge_clip_path = 'polygon(0 0, 100% 0, 86% 100%, 0 100%)'
+        elsif template_type == 'burst'
+          assign badge_clip_path = 'polygon(50% 0%, 59% 14%, 75% 7%, 78% 24%, 95% 25%, 86% 41%, 100% 50%, 86% 59%, 95% 75%, 78% 76%, 75% 93%, 59% 86%, 50% 100%, 41% 86%, 25% 93%, 22% 76%, 5% 75%, 14% 59%, 0% 50%, 14% 41%, 5% 25%, 22% 24%, 25% 7%, 41% 14%)'
+        endif
+        assign badge_text_shadow_value = '0 1px 2px rgba(0, 0, 0, 0.24)'
+        if text_shadow == 'none'
+          assign badge_text_shadow_value = 'none'
+        elsif text_shadow == 'bold'
+          assign badge_text_shadow_value = '0 2px 6px rgba(0, 0, 0, 0.38)'
+        endif
         assign tag_matched = false
       -%}
 
@@ -124,10 +224,60 @@
             {%- if image_url != blank -%}
               --bbt-badge-image: url('{{ image_url | escape }}');
             {%- endif -%}
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-sizing: border-box;
+            width: var(--bbt-badge-width, auto);
+            min-width: var(--bbt-badge-width, 0);
+            max-width: 100%;
+            height: var(--bbt-badge-height, auto);
+            min-height: {{ badge_min_height }}px;
+            padding: {{ badge_padding }};
+            border-radius: {{ badge_radius }};
+            background-color: var(--bbt-badge-bg, #16a34a);
+            background-image: var(--bbt-badge-image);
+            background-position: center;
+            background-size: {{ badge_background_size }};
+            background-repeat: {{ badge_background_repeat }};
+            color: var(--bbt-badge-color, #ffffff);
+            font-size: var(--bbt-font-size, {{ font_size }}px);
+            font-family: {{ badge_font_family_value }};
+            font-weight: {{ badge_font_weight_value }};
+            line-height: 16px;
+            text-transform: {{ badge_text_transform }};
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border: {{ badge_border_value }};
+            box-shadow: {{ badge_shadow_value }};
+            opacity: var(--bbt-opacity, 1);
+            transform: rotate(var(--bbt-rotation, 0deg));
+            {%- if badge_clip_path != blank -%}
+              clip-path: {{ badge_clip_path }};
+            {%- endif -%}
           "
           aria-label="{{ mapping_label | escape }}"
         >
-          <span class="bbt-badge__text">{{ mapping_label | escape }}</span>
+          <span
+            class="bbt-badge__text"
+            style="
+              overflow: hidden;
+              text-overflow: ellipsis;
+              text-align: {{ text_align }};
+              text-shadow: {{ badge_text_shadow_value }};
+              {%- if template_type != 'text' or image_url != blank -%}
+                position: absolute;
+                left: var(--bbt-text-x, 50%);
+                top: var(--bbt-text-y, 50%);
+                width: 86%;
+                transform: translate(-50%, -50%);
+              {%- endif -%}
+            "
+          >
+            {{ mapping_label | escape }}
+          </span>
         </span>
         {%- assign rendered_count = rendered_count | plus: 1 -%}
       {%- endif -%}
