@@ -79,12 +79,12 @@ For more information on the Shopify Dev MCP please read [the documentation](http
 
 ### Application Storage
 
-This template uses [Prisma](https://www.prisma.io/) to store session data, by default using an [SQLite](https://www.sqlite.org/index.html) database.
+This app uses [Prisma](https://www.prisma.io/) to store Shopify session data in PostgreSQL.
 The database is defined as a Prisma schema in `prisma/schema.prisma`.
 
-This use of SQLite works in production if your app runs as a single instance.
+For Render production deployments, set `DATABASE_URL` to the Supabase transaction pooler URL and `DIRECT_URL` to the Supabase session pooler URL so runtime queries and migrations both use durable PostgreSQL storage.
 The database that works best for you depends on the data your app needs and how it is queried.
-Here’s a short list of databases providers that provide a free tier to get started:
+Here's a short list of database providers that provide a free tier to get started:
 
 | Database   | Type             | Hosters                                                                                                                                                                                                                                    |
 | ---------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
