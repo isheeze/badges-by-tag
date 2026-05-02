@@ -563,6 +563,7 @@ export default function BadgesPage() {
   const [dirty, setDirty] = useState(false);
   const [presetCategory, setPresetCategory] = useState("All");
   const [activeCard, setActiveCard] = useState("mappings");
+  const [savingIntent, setSavingIntent] = useState("");
   const studioRef = useRef(null);
 
   useEffect(() => {
@@ -574,6 +575,7 @@ export default function BadgesPage() {
     if (actionData?.ok) {
       setMappings(actionData.mappings ?? []);
       setDirty(false);
+      setSavingIntent("");
     }
   }, [actionData]);
 
@@ -584,6 +586,7 @@ export default function BadgesPage() {
   );
   const isSaving = navigation.state !== "idle" && navigation.formAction?.endsWith("/app/badges");
   const justSaved = actionData?.ok && !dirty && !isSaving;
+  const savingMessage = savingIntent === "delete" ? "Deleting badge..." : savingIntent ? "Saving badge..." : "Saving mappings...";
   const overFreeLimit = billing?.enabled && !billing.hasPro && mappings.length > billing.freeLimit;
 
   function updateMappings(nextMappings, options = {}) {
@@ -680,6 +683,7 @@ export default function BadgesPage() {
       return;
     }
 
+    setSavingIntent(editingIndex === -1 ? "add" : "update");
     updateMappings(nextMappings, { saved: true });
     saveToShopify(nextMappings);
     resetForm();
@@ -698,18 +702,20 @@ export default function BadgesPage() {
 
   function deleteMapping(indexToDelete) {
     const nextMappings = mappings.filter((_, itemIndex) => itemIndex !== indexToDelete);
+    setSavingIntent("delete");
     updateMappings(nextMappings, { saved: true });
     saveToShopify(nextMappings);
   }
 
   return (
     <s-page heading="Badges by Tag">
-      <s-button slot="secondary-actions" onClick={showPresetPicker}>
+      <s-button slot="secondary-actions" onClick={showPresetPicker} disabled={isSaving}>
         Add badge
       </s-button>
 
       <s-section>
         <div style={styles.pageStack}>
+          {isSaving ? <div style={styles.info}>{savingMessage}</div> : null}
           {justSaved ? <div style={styles.success}>Mappings saved to Shopify.</div> : null}
           {billing?.error ? (
             <div style={styles.alert}>
@@ -824,7 +830,7 @@ export default function BadgesPage() {
                         <code style={styles.tag}>tag: {mapping.tag}</code>
                       </div>
                       <div style={styles.actions}>
-                        <s-button onClick={() => startEdit(index)}>Edit</s-button>
+                        <s-button onClick={() => startEdit(index)} disabled={isSaving}>Edit</s-button>
                         <s-button tone="critical" onClick={() => deleteMapping(index)} disabled={isSaving}>
                           Delete
                         </s-button>
