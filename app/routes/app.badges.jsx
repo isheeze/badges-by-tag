@@ -257,7 +257,7 @@ function BadgePreview({
   );
 }
 
-function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
+function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel, isSaving }) {
   const previewTextColor = form.textColor || contrastColor(form.bgColor);
   const studioSteps = [
     { id: "mapping", label: "Mapping", summary: "Connect a product tag to the badge customers will see." },
@@ -487,7 +487,7 @@ function BadgeForm({ form, error, onChange, onCancel, onSave, submitLabel }) {
               {activeStepIndex < studioSteps.length - 1 ? (
                 <s-button variant="primary" onClick={() => setActiveStep(nextStep)}>Next</s-button>
               ) : null}
-              <s-button variant={activeStepIndex === studioSteps.length - 1 ? "primary" : undefined} onClick={onSave}>{submitLabel}</s-button>
+              <s-button variant={activeStepIndex === studioSteps.length - 1 ? "primary" : undefined} onClick={onSave} disabled={isSaving} {...(isSaving ? { loading: true } : {})}>{isSaving ? "Saving" : submitLabel}</s-button>
             </div>
           </div>
         </div>
@@ -575,9 +575,9 @@ export default function BadgesPage() {
   const justSaved = actionData?.ok && !dirty && !isSaving;
   const overFreeLimit = billing?.enabled && !billing.hasPro && mappings.length > billing.freeLimit;
 
-  function updateMappings(nextMappings) {
+  function updateMappings(nextMappings, options = {}) {
     setMappings(nextMappings);
-    setDirty(true);
+    setDirty(!options.saved);
   }
 
   function resetForm() {
@@ -655,12 +655,17 @@ export default function BadgesPage() {
       opacity: form.opacity,
     };
 
-    if (editingIndex === -1) {
-      updateMappings([...mappings, nextMapping]);
-    } else {
-      updateMappings(mappings.map((mapping, index) => (index === editingIndex ? nextMapping : mapping)));
+    const nextMappings = editingIndex === -1
+      ? [...mappings, nextMapping]
+      : mappings.map((mapping, index) => (index === editingIndex ? nextMapping : mapping));
+
+    if (billing?.enabled && !billing.hasPro && nextMappings.length > billing.freeLimit) {
+      setError(`The free plan supports up to ${billing.freeLimit} badges. Upgrade to Pro to save more.`);
+      return;
     }
 
+    updateMappings(nextMappings, { saved: true });
+    saveToShopify(nextMappings);
     resetForm();
   }
 
@@ -669,17 +674,20 @@ export default function BadgesPage() {
     startCreate(preset);
   }
 
-  function saveToShopify() {
+  function saveToShopify(nextMappings = mappings) {
     const formData = new FormData();
-    formData.append("mappings", JSON.stringify(normalizeBadgeMappings(mappings)));
+    formData.append("mappings", JSON.stringify(normalizeBadgeMappings(nextMappings)));
     submit(formData, { method: "post", action: "/app/badges" });
+  }
+
+  function deleteMapping(indexToDelete) {
+    const nextMappings = mappings.filter((_, itemIndex) => itemIndex !== indexToDelete);
+    updateMappings(nextMappings, { saved: true });
+    saveToShopify(nextMappings);
   }
 
   return (
     <s-page heading="Badges by Tag">
-      <s-button slot="primary-action" variant="primary" onClick={saveToShopify} disabled={!dirty || isSaving || overFreeLimit} {...(isSaving ? { loading: true } : {})}>
-        {isSaving ? "Saving" : justSaved ? "Saved" : "Save mappings"}
-      </s-button>
       <s-button slot="secondary-actions" onClick={showPresetPicker}>
         Add badge
       </s-button>
@@ -724,7 +732,8 @@ export default function BadgesPage() {
                 onChange={setForm}
                 onCancel={resetForm}
                 onSave={saveDraft}
-                submitLabel={editingIndex === -1 ? "Add draft" : "Update draft"}
+                isSaving={isSaving}
+                submitLabel={editingIndex === -1 ? "Add badge" : "Update badge"}
               />
             </div>
           ) : null}
@@ -781,13 +790,13 @@ export default function BadgesPage() {
               <div style={styles.panelHeader}>
                 <div>
                   <h2 style={styles.heading}>Saved mappings</h2>
-                  <p style={styles.subdued}>Draft changes stay here until you save mappings to Shopify.</p>
+                  <p style={styles.subdued}>Changes from Badge Studio are saved to Shopify automatically.</p>
                 </div>
               </div>
               {mappings.length === 0 ? (
                 <div style={styles.emptyState}>
                   <h3 style={styles.emptyTitle}>No badge mappings yet</h3>
-                  <p style={styles.subdued}>Add a badge manually or use a preset, then save the mappings to Shopify.</p>
+                  <p style={styles.subdued}>Add a badge manually or use a preset, then it will save automatically.</p>
                   <s-button variant="primary" onClick={showPresetPicker}>Add first badge</s-button>
                 </div>
               ) : (
@@ -800,7 +809,7 @@ export default function BadgesPage() {
                       </div>
                       <div style={styles.actions}>
                         <s-button onClick={() => startEdit(index)}>Edit</s-button>
-                        <s-button tone="critical" onClick={() => updateMappings(mappings.filter((_, itemIndex) => itemIndex !== index))}>
+                        <s-button tone="critical" onClick={() => deleteMapping(index)} disabled={isSaving}>
                           Delete
                         </s-button>
                       </div>
