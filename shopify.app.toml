@@ -2,6 +2,7 @@
 
 client_id = "596a055d2bc391bf5bff8f6bda528f5c"
 name = "UltraTalent - Badges by Tag"
+handle = "ultratalent-badges-by-tag"
 application_url = "https://badges-by-tag.onrender.com"
 embedded = true
 
