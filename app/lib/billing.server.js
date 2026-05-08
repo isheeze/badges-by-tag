@@ -3,7 +3,7 @@ export const FREE_BADGE_LIMIT = Number(process.env.FREE_BADGE_LIMIT || 3);
 export const BILLING_ENABLED = process.env.BILLING_ENABLED === "1";
 const BILLING_TEST_MODE = process.env.NODE_ENV !== "production";
 
-export async function getActivePlan(billing) {
+export async function getActivePlan(billing, admin) {
   if (!BILLING_ENABLED) {
     return { hasPro: false, charge: null, enabled: false };
   }
@@ -14,15 +14,23 @@ export async function getActivePlan(billing) {
       isTest: BILLING_TEST_MODE,
     });
 
-    return {
-      hasPro: Boolean(result?.hasActivePayment),
-      charge: result?.appSubscriptions?.[0] ?? null,
-      enabled: true,
-    };
+    if (result?.hasActivePayment) {
+      return {
+        hasPro: true,
+        charge: result?.appSubscriptions?.[0] ?? null,
+        enabled: true,
+      };
+    }
   } catch (error) {
     console.warn("Billing check failed", error);
-    return { hasPro: false, charge: null, enabled: true };
   }
+
+  const activeSubscription = await getActiveProSubscription(admin);
+  return {
+    hasPro: Boolean(activeSubscription),
+    charge: activeSubscription,
+    enabled: true,
+  };
 }
 
 export async function requestProPlan({ billing }) {
@@ -40,12 +48,12 @@ export async function requestProPlan({ billing }) {
   });
 }
 
-export async function cancelProPlan({ billing }) {
+export async function cancelProPlan({ billing, admin }) {
   if (!BILLING_ENABLED) {
     return null;
   }
 
-  const plan = await getActivePlan(billing);
+  const plan = await getActivePlan(billing, admin);
   const subscriptionId = plan.charge?.id;
 
   if (!subscriptionId) {
@@ -61,4 +69,33 @@ export async function cancelProPlan({ billing }) {
 
 export function isPlanLimitExceeded({ hasPro, mappingCount }) {
   return !hasPro && mappingCount > FREE_BADGE_LIMIT;
+}
+
+async function getActiveProSubscription(admin) {
+  if (!admin) {
+    return null;
+  }
+
+  try {
+    const response = await admin.graphql(
+      `#graphql
+      query ActiveAppSubscriptions {
+        currentAppInstallation {
+          activeSubscriptions {
+            id
+            name
+            status
+            test
+          }
+        }
+      }`,
+    );
+    const result = await response.json();
+    const subscriptions = result?.data?.currentAppInstallation?.activeSubscriptions ?? [];
+
+    return subscriptions.find((subscription) => subscription?.name === PLAN_PRO && subscription?.status === "ACTIVE") ?? null;
+  } catch (error) {
+    console.warn("Active subscription query failed", error);
+    return null;
+  }
 }

@@ -66,7 +66,7 @@ export const loader = async ({ request }) => {
   const [mappings, publishedTheme, plan] = await Promise.all([
     getBadgeMappings(admin),
     getPublishedTheme(admin).catch(() => null),
-    getActivePlan(billing),
+    getActivePlan(billing, admin),
   ]);
   // eslint-disable-next-line no-undef
   const apiKey = process.env.SHOPIFY_API_KEY || "";
@@ -98,7 +98,7 @@ export const action = async ({ request }) => {
   }
 
   const cleanedMappings = normalizeBadgeMappings(submittedMappings);
-  const plan = await getActivePlan(billing);
+  const plan = await getActivePlan(billing, admin);
 
   if (isPlanLimitExceeded({ hasPro: plan.hasPro, mappingCount: cleanedMappings.length })) {
     return data(

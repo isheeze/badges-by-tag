@@ -10,8 +10,8 @@ const PRO_TRIAL_DAYS = 7;
 export const loader = async ({ request }) => {
   const { getActivePlan, FREE_BADGE_LIMIT, BILLING_ENABLED } = await import("../lib/billing.server.js");
   const url = new URL(request.url);
-  const { billing, session } = await authenticate.admin(request);
-  const plan = await getActivePlan(billing);
+  const { admin, billing, session } = await authenticate.admin(request);
+  const plan = await getActivePlan(billing, admin);
 
   return {
     billing: {
@@ -85,7 +85,7 @@ async function cancelPlan(request) {
   let cancelled = false;
   try {
     console.info("Cancelling Pro plan", { shop: session.shop });
-    await cancelProPlan({ billing });
+    await cancelProPlan({ billing, admin });
     cancelled = true;
     console.info("Cancelled Pro plan", { shop: session.shop });
   } catch (error) {

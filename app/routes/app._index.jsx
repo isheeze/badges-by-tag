@@ -10,7 +10,7 @@ export const loader = async ({ request }) => {
   const [mappings, publishedTheme, plan] = await Promise.all([
     getBadgeMappings(admin),
     getPublishedTheme(admin).catch(() => null),
-    getActivePlan(billing),
+    getActivePlan(billing, admin),
   ]);
   // eslint-disable-next-line no-undef
   const apiKey = process.env.SHOPIFY_API_KEY || "";

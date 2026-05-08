@@ -12,13 +12,13 @@ function serializeBillingError(error) {
 
 export const loader = async ({ request }) => {
   const { getActivePlan, requestProPlan, BILLING_ENABLED } = await import("../lib/billing.server.js");
-  const { billing } = await authenticate.admin(request);
+  const { admin, billing } = await authenticate.admin(request);
 
   if (!BILLING_ENABLED) {
     throw redirect("/app/pricing");
   }
 
-  const plan = await getActivePlan(billing);
+  const plan = await getActivePlan(billing, admin);
   if (plan.hasPro) {
     throw redirect("/app/badges");
   }
